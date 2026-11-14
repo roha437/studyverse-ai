@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --sv-bg: #f8f6fc;
+    --sv-surface: #ffffff;
+    --sv-surface-muted: #f3effb;
+    --sv-border: #e5dff4;
+    --sv-ink: #1b1430;
+    --sv-ink-muted: #5b5276;
+    --sv-primary: #6d28d9;
+    --sv-primary-hover: #5b21b6;
+    --sv-lavender-soft: #ede9fe;
+  }
+
+  .dark {
+    --sv-bg: #110d1e;
+    --sv-surface: #19132b;
+    --sv-surface-muted: #221a3a;
+    --sv-border: #2e244d;
+    --sv-ink: #f3f0fc;
+    --sv-ink-muted: #b0a6cf;
+    --sv-primary: #8b5cf6;
+    --sv-primary-hover: #7c3aed;
+    --sv-lavender-soft: #2a1f4d;
+  }
+
+  html {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background-color: var(--sv-bg);
+    color: var(--sv-ink);
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  .font-mono-tabular {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

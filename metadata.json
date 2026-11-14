@@ -1,0 +1,6 @@
+{
+  "name": "StudyVerse",
+  "description": "AI-powered educational platform for students in Classes 5–10 and Intermediate 1st and 2nd Year.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
