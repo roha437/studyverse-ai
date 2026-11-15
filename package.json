@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx --test src/utils/curriculumHelpers.test.ts src/utils/databaseMappers.test.ts src/data/assessments.test.ts src/utils/assessmentAnalytics.test.ts src/utils/mockTestHelpers.test.ts src/utils/notesGeneratorHelpers.test.ts src/utils/noteHelpers.test.ts src/utils/focusSessionHelpers.test.ts src/utils/notificationHelpers.test.ts src/utils/guardianHelpers.test.ts src/utils/supabaseHelpers.test.ts src/utils/ariaTeacherHelpers.test.ts src/utils/lessonGeneratorHelpers.test.ts src/utils/rateLimiter.test.ts src/utils/numericalLabHelpers.test.ts src/server/numericalLabRouter.test.ts src/utils/studyPlannerHelpers.test.ts src/server/studyPlannerRouter.test.ts src/utils/youtubeHelpers.test.ts src/utils/videoLearningHelpers.test.ts src/server/youtubeRouter.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

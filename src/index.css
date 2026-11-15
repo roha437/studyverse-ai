@@ -3,15 +3,15 @@
 
 @layer base {
   :root {
-    --sv-bg: #f8f6fc;
+    --sv-bg: #f7f5ff;
     --sv-surface: #ffffff;
-    --sv-surface-muted: #f3effb;
-    --sv-border: #e5dff4;
-    --sv-ink: #1b1430;
-    --sv-ink-muted: #5b5276;
-    --sv-primary: #6d28d9;
-    --sv-primary-hover: #5b21b6;
-    --sv-lavender-soft: #ede9fe;
+    --sv-surface-muted: #f0ebff;
+    --sv-border: #e5deff;
+    --sv-ink: #1b1831;
+    --sv-ink-muted: #6b6684;
+    --sv-primary: #5a45c8;
+    --sv-primary-hover: #442cb2;
+    --sv-lavender-soft: #e5deff;
   }
 
   .dark {
@@ -27,9 +27,15 @@
   }
 
   html {
-    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--sv-bg);
     color: var(--sv-ink);
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: var(--sv-bg);
   }
 
   h1, h2, h3, h4, .font-display {
@@ -40,6 +46,26 @@
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     font-variant-numeric: tabular-nums;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--sv-primary);
+    outline-offset: 2px;
+  }
+}
+
+.studyverse-stitch-app main [class~="rounded-2xl"][class*="border"],
+.studyverse-stitch-app main [class~="rounded-3xl"][class*="border"] {
+  border-radius: 1.5rem;
+  box-shadow: 0 12px 30px -20px rgb(90 69 200 / 28%);
+}
+
+.studyverse-stitch-app button[class~="rounded-xl"] {
+  border-radius: 9999px;
+}
+
+.dark .studyverse-stitch-app main [class~="rounded-2xl"][class*="border"],
+.dark .studyverse-stitch-app main [class~="rounded-3xl"][class*="border"] {
+  box-shadow: 0 12px 30px -20px rgb(0 0 0 / 55%);
 }
 
 .tabular-nums {

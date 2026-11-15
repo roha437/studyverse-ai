@@ -51,6 +51,39 @@ test('filterCurriculumTopics finds matching topics across grades', () => {
   assert.equal(hits[0].gradeId, 'class-10');
 });
 
+test('Classes 6–10 expose core learning pathways with unique context IDs and objectives', () => {
+  const middleAndSecondary = CURRICULUM_CLASSES.filter(
+    (curriculumClass) => curriculumClass.order >= 6 && curriculumClass.order <= 10
+  );
+  const curriculumIds = new Set<string>();
+
+  assert.equal(middleAndSecondary.length, 5);
+  for (const curriculumClass of middleAndSecondary) {
+    const subjects = curriculumClass.subjects;
+    assert.ok(subjects.some((subject) => subject.name === 'Mathematics'));
+    assert.ok(subjects.some((subject) => subject.name === 'English Language' || subject.name === 'English Language and Literature'));
+    assert.ok(subjects.some((subject) => subject.name === 'Social Studies' || subject.name === 'Social Science'));
+    assert.ok(subjects.some((subject) => ['Science', 'Physics', 'Biology'].includes(subject.name)));
+
+    for (const subject of subjects) {
+      assert.ok(!curriculumIds.has(subject.id), `duplicate subject id: ${subject.id}`);
+      curriculumIds.add(subject.id);
+      for (const chapter of subject.chapters) {
+        assert.ok(!curriculumIds.has(chapter.id), `duplicate chapter id: ${chapter.id}`);
+        curriculumIds.add(chapter.id);
+        assert.ok(chapter.topics.length > 0, `empty chapter: ${chapter.id}`);
+        if (chapter.textbookUnit.startsWith('Curated learning cluster')) {
+          for (const topic of chapter.topics) {
+            assert.ok(topic.learningObjective, `missing learning objective: ${topic.id}`);
+            assert.ok(!curriculumIds.has(topic.id), `duplicate topic id: ${topic.id}`);
+            curriculumIds.add(topic.id);
+          }
+        }
+      }
+    }
+  }
+});
+
 test('formatSecondsToTimer formats MM:SS deterministically', () => {
   assert.equal(formatSecondsToTimer(1500), '25:00');
   assert.equal(formatSecondsToTimer(65), '01:05');

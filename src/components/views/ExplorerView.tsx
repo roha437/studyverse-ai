@@ -191,13 +191,13 @@ export function ExplorerView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 space-y-4">
+      <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+            <h2 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
               Browse Classes 5–10 &amp; Intermediate
             </h2>
-            <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+            <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
               Select a class, subject, chapter, and topic to launch any StudyVerse learning tool.
             </p>
           </div>
@@ -213,7 +213,7 @@ export function ExplorerView({
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search chapters and topics across all classes"
               placeholder="Search topics, formulas, chapters..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
             />
           </div>
         </div>
@@ -229,8 +229,8 @@ export function ExplorerView({
                 aria-pressed={active}
                 className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                   active
-                    ? 'bg-[#6d28d9] text-white'
-                    : 'bg-[#f3effb] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#c4b5fd] hover:bg-[#ede9fe] dark:hover:bg-[#2c214f]'
+                    ? 'bg-[#5a45c8] text-white'
+                    : 'bg-[#f0ebff] dark:bg-[#221a3a] text-[#484554] dark:text-[#c4b5fd] hover:bg-[#e5deff] dark:hover:bg-[#2c214f]'
                 }`}
               >
                 {cls.label}
@@ -241,7 +241,7 @@ export function ExplorerView({
 
         {isIntermediateGrade(context.gradeId) ? (
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-medium text-[#5b5276] dark:text-[#b0a6cf] mr-1">
+            <span className="text-xs font-medium text-[#6b6684] dark:text-[#b0a6cf] mr-1">
               Stream:
             </span>
             {STREAM_OPTIONS.map((stream) => {
@@ -254,8 +254,8 @@ export function ExplorerView({
                   aria-pressed={active}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap cursor-pointer ${
                     active
-                      ? 'bg-[#ede9fe] dark:bg-[#322657] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
-                      : 'border-[#e5dff4] dark:border-[#372a5c] text-[#5b5276] dark:text-[#b0a6cf]'
+                      ? 'bg-[#e5deff] dark:bg-[#322657] border-[#5a45c8] text-[#442cb2] dark:text-[#f3f0fc]'
+                      : 'border-[#e5deff] dark:border-[#372a5c] text-[#6b6684] dark:text-[#b0a6cf]'
                   }`}
                 >
                   {stream.label}
@@ -267,12 +267,12 @@ export function ExplorerView({
       </div>
 
       {searchQuery.trim() ? (
-        <section className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
-          <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc] mb-3 tabular-nums">
+        <section className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
+          <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc] mb-3 tabular-nums">
             Search Results ({searchHits.length})
           </h3>
           {searchHits.length === 0 ? (
-            <p className="text-sm text-[#5b5276] dark:text-[#b0a6cf]">
+            <p className="text-sm text-[#6b6684] dark:text-[#b0a6cf]">
               No curriculum topics matched &ldquo;{searchQuery}&rdquo;. Try searching &ldquo;Quadratic&rdquo;,
               &ldquo;Optics&rdquo;, &ldquo;Calculus&rdquo;, or &ldquo;Fractions&rdquo;.
             </p>
@@ -292,15 +292,15 @@ export function ExplorerView({
                     });
                     setSearchQuery('');
                   }}
-                  className="text-left p-4 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] transition-colors cursor-pointer"
+                  className="text-left p-4 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] transition-colors cursor-pointer"
                 >
-                  <div className="text-xs text-[#6d28d9] dark:text-[#c4b5fd] font-medium">
+                  <div className="text-xs text-[#5a45c8] dark:text-[#c4b5fd] font-medium">
                     {hit.gradeLabel} · {hit.subjectName} · {hit.chapterTitle}
                   </div>
-                  <div className="mt-1 font-semibold text-sm text-[#1b1430] dark:text-[#f3f0fc]">
+                  <div className="mt-1 font-semibold text-sm text-[#1b1831] dark:text-[#f3f0fc]">
                     {hit.topicTitle}
                   </div>
-                  <div className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                  <div className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                     {hit.topicSummary}
                   </div>
                 </button>
@@ -312,8 +312,8 @@ export function ExplorerView({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4 space-y-4">
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
-            <h3 className="font-display text-sm font-bold text-[#1b1430] dark:text-[#f3f0fc] mb-3">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
+            <h3 className="font-display text-sm font-bold text-[#1b1831] dark:text-[#f3f0fc] mb-3">
               1. Subjects in {selectedClass.label}
             </h3>
             <div className="space-y-2">
@@ -326,8 +326,8 @@ export function ExplorerView({
                     onClick={() => handleSelectSubject(subj.id)}
                     className={`w-full text-left px-3.5 py-3 rounded-xl border transition-colors cursor-pointer ${
                       active
-                        ? 'bg-[#ede9fe] dark:bg-[#2c214f] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
-                        : 'bg-[#faf8ff] dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#2e244d] text-[#1b1430] dark:text-[#e9e4f8]'
+                        ? 'bg-[#e5deff] dark:bg-[#2c214f] border-[#5a45c8] text-[#442cb2] dark:text-[#f3f0fc]'
+                        : 'bg-[#fcfaff] dark:bg-[#221a3a] border-[#e5deff] dark:border-[#2e244d] text-[#1b1831] dark:text-[#e9e4f8]'
                     }`}
                   >
                     <div className="text-xs font-mono-tabular opacity-75">{subj.code}</div>
@@ -338,8 +338,8 @@ export function ExplorerView({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
-            <h3 className="font-display text-sm font-bold text-[#1b1430] dark:text-[#f3f0fc] mb-3">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
+            <h3 className="font-display text-sm font-bold text-[#1b1831] dark:text-[#f3f0fc] mb-3">
               2. Chapters
             </h3>
             <div className="space-y-2">
@@ -352,8 +352,8 @@ export function ExplorerView({
                     onClick={() => handleSelectChapter(ch.id)}
                     className={`w-full text-left px-3.5 py-3 rounded-xl border transition-colors cursor-pointer ${
                       active
-                        ? 'bg-[#ede9fe] dark:bg-[#2c214f] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
-                        : 'bg-[#faf8ff] dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#2e244d] text-[#1b1430] dark:text-[#e9e4f8]'
+                        ? 'bg-[#e5deff] dark:bg-[#2c214f] border-[#5a45c8] text-[#442cb2] dark:text-[#f3f0fc]'
+                        : 'bg-[#fcfaff] dark:bg-[#221a3a] border-[#e5deff] dark:border-[#2e244d] text-[#1b1831] dark:text-[#e9e4f8]'
                     }`}
                   >
                     <div className="text-xs text-[#776d94] dark:text-[#968cb8]">
@@ -368,8 +368,8 @@ export function ExplorerView({
         </div>
 
         <div className="lg:col-span-8 space-y-4">
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
-            <h3 className="font-display text-sm font-bold text-[#1b1430] dark:text-[#f3f0fc] mb-3">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5">
+            <h3 className="font-display text-sm font-bold text-[#1b1831] dark:text-[#f3f0fc] mb-3">
               3. Topics in {selectedChapter.title}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -387,11 +387,11 @@ export function ExplorerView({
                     }}
                     className={`text-left p-4 rounded-xl border transition-colors cursor-pointer ${
                       active
-                        ? 'bg-[#f5f2ff] dark:bg-[#2c214f] border-[#6d28d9]'
-                        : 'bg-[#faf8ff] dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#2e244d] hover:border-[#c4b5fd]'
+                        ? 'bg-[#f0ebff] dark:bg-[#2c214f] border-[#5a45c8]'
+                        : 'bg-[#fcfaff] dark:bg-[#221a3a] border-[#e5deff] dark:border-[#2e244d] hover:border-[#c4b5fd]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2 text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                    <div className="flex items-center justify-between gap-2 text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
                       <span>
                         Est. {topic.estimatedMinutes} min
                         {topic.hasNumericals ? ' · Numericals' : ''}
@@ -402,10 +402,10 @@ export function ExplorerView({
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-1 font-semibold text-sm text-[#1b1430] dark:text-[#f3f0fc]">
+                    <div className="mt-1 font-semibold text-sm text-[#1b1831] dark:text-[#f3f0fc]">
                       {topic.title}
                     </div>
-                    <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                    <p className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                       {topic.summary}
                     </p>
                   </button>
@@ -414,14 +414,14 @@ export function ExplorerView({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+                <div className="text-xs font-medium text-[#5a45c8] dark:text-[#c4b5fd]">
                   Selected Topic Workspace
                   {topicProgress ? ` · Progress ${topicProgress.completionPercentage}%` : ''}
                 </div>
-                <h3 className="mt-1 font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <h3 className="mt-1 font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   {selectedTopic.title}
                 </h3>
               </div>
@@ -434,7 +434,7 @@ export function ExplorerView({
                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                     isTopicCompleted
                       ? 'bg-[#ecfdf5] dark:bg-[#102d24] border-[#a7f3d0] dark:border-[#047857] text-[#059669] dark:text-[#34d399]'
-                      : 'border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe]'
+                      : 'border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff]'
                   }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -446,8 +446,8 @@ export function ExplorerView({
                   onClick={() => void handleBookmarkTopic()}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                     isBookmarked
-                      ? 'bg-[#ede9fe] dark:bg-[#2c214f] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
-                      : 'border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe]'
+                      ? 'bg-[#e5deff] dark:bg-[#2c214f] border-[#5a45c8] text-[#442cb2] dark:text-[#f3f0fc]'
+                      : 'border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff]'
                   }`}
                 >
                   <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
@@ -456,7 +456,7 @@ export function ExplorerView({
               </div>
             </div>
 
-            <p className="mt-2 text-sm text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+            <p className="mt-2 text-sm text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
               {selectedTopic.summary}
             </p>
 
@@ -476,11 +476,11 @@ export function ExplorerView({
             ) : null}
 
             {selectedTopic.keyFormula ? (
-              <div className="mt-4 p-3.5 rounded-xl bg-[#f8f6fc] dark:bg-[#221a3a] border border-[#e5dff4] dark:border-[#372a5c]">
+              <div className="mt-4 p-3.5 rounded-xl bg-[#f7f5ff] dark:bg-[#221a3a] border border-[#e5deff] dark:border-[#372a5c]">
                 <div className="text-xs font-medium text-[#776d94] dark:text-[#968cb8]">
                   Key Textbook Relation
                 </div>
-                <div className="mt-1 font-mono-tabular text-sm font-semibold text-[#1b1430] dark:text-[#f3f0fc]">
+                <div className="mt-1 font-mono-tabular text-sm font-semibold text-[#1b1831] dark:text-[#f3f0fc]">
                   {selectedTopic.keyFormula}
                 </div>
               </div>
@@ -490,15 +490,23 @@ export function ExplorerView({
               <button
                 type="button"
                 onClick={() => onNavigate('lessons')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <BookOpen className="w-4 h-4" aria-hidden="true" />
                 <span>Open AI Lesson</span>
               </button>
               <button
                 type="button"
+                onClick={() => onNavigate('youtube')}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Youtube className="w-4 h-4" aria-hidden="true" />
+                <span>Watch videos for this topic</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => onNavigate('notes')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <FileText className="w-4 h-4" aria-hidden="true" />
                 <span>Study Notes</span>
@@ -506,7 +514,7 @@ export function ExplorerView({
               <button
                 type="button"
                 onClick={() => onNavigate('aria')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <Bot className="w-4 h-4" aria-hidden="true" />
                 <span>Ask AI Teacher Aria</span>
@@ -514,7 +522,7 @@ export function ExplorerView({
               <button
                 type="button"
                 onClick={() => onNavigate('quizzes')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <CheckSquare className="w-4 h-4" aria-hidden="true" />
                 <span>Practice Quiz</span>
@@ -522,7 +530,7 @@ export function ExplorerView({
               <button
                 type="button"
                 onClick={() => onNavigate('numerical-lab')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <Calculator className="w-4 h-4" aria-hidden="true" />
                 <span>Numerical Lab</span>
@@ -530,7 +538,7 @@ export function ExplorerView({
               <button
                 type="button"
                 onClick={() => onNavigate('youtube')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-[#484554] dark:text-[#e9e4f8] hover:bg-[#e5deff] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <Youtube className="w-4 h-4" aria-hidden="true" />
                 <span>Find Videos</span>

@@ -38,7 +38,6 @@ import {
   formatAttemptTimestamp,
   formatPlanDateLabel,
 } from '../../utils/databaseMappers';
-import { ImageWithFallback } from '../common/ImageWithFallback';
 import { IntegrationBanner } from '../common/IntegrationBanner';
 
 interface DashboardViewProps {
@@ -132,8 +131,8 @@ export function DashboardView({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-[#5b21b6]/30 dark:border-[#372a5c] bg-gradient-to-br from-[#3b1578] via-[#5b21b6] to-[#6d28d9] text-white overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-sm">
-        <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between gap-6">
+      <section className="grid grid-cols-1 items-stretch overflow-hidden rounded-3xl border border-[#e5deff] bg-white dark:border-[#372a5c] dark:bg-[#19132b] lg:grid-cols-12">
+        <div className="flex flex-col justify-between gap-6 bg-gradient-to-br from-[#3b1578] via-[#442cb2] to-[#5a45c8] p-6 text-white sm:p-8 lg:col-span-7">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#e9d5ff]">
               <span>{currentClass.label}</span>
@@ -157,7 +156,7 @@ export function DashboardView({
               Welcome back, {profile.name}
             </h2>
 
-            <p className="text-sm sm:text-base text-[#ede9fe] max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-base text-[#e5deff] max-w-xl leading-relaxed">
               {profile.academicGoal?.trim()
                 ? profile.academicGoal
                 : `Active study focus: ${subject.name} — ${chapter.title} (${topic.title}).`}
@@ -174,7 +173,7 @@ export function DashboardView({
                   {subject.name} · Ch. {chapter.number}: {topic.title}
                 </div>
               </div>
-              <div className="text-xs font-mono-tabular text-[#ede9fe] whitespace-nowrap shrink-0">
+              <div className="text-xs font-mono-tabular text-[#e5deff] whitespace-nowrap shrink-0">
                 Est. {topic.estimatedMinutes} min
               </div>
             </div>
@@ -183,7 +182,7 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('lessons')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#f5f2ff] text-[#4c1d95] text-sm font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-[#f0ebff] text-[#4c1d95] text-sm font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <BookOpen className="w-4 h-4" aria-hidden="true" />
                 <span>Continue Lesson</span>
@@ -201,7 +200,7 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('explorer')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 hover:bg-white/10 text-[#ede9fe] hover:text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 hover:bg-white/10 text-[#e5deff] hover:text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Compass className="w-4 h-4" aria-hidden="true" />
                 <span>Browse Curriculum</span>
@@ -210,27 +209,56 @@ export function DashboardView({
           </div>
         </div>
 
-        <div className="lg:col-span-5 relative min-h-[220px] lg:min-h-full bg-[#2b1457]">
-          <ImageWithFallback
-            src="/src/assets/images/studyverse_hero_banner_1794676730762.jpg"
-            alt="StudyVerse open textbook and geometric learning workspace"
-            className="w-full h-full object-cover"
-            fallbackTitle="StudyVerse Workspace"
-          />
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-t from-[#160933]/90 via-[#160933]/30 to-transparent"
-          />
-          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-            <div className="text-xs font-medium text-[#ddd6fe]">
-              {topic.keyFormula ? 'Key Relation in Focus' : 'Active Syllabus Chapter'}
+        <div className="flex flex-col justify-center gap-5 bg-[#f0ebff] p-6 dark:bg-[#221a3a] sm:p-8 lg:col-span-5">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#5a45c8] dark:text-[#c4b5fd]">
+              Your learning path
             </div>
-            <div className="mt-1 font-display text-base font-bold text-white truncate">
-              {topic.keyFormula || chapter.title}
-            </div>
-            <div className="mt-0.5 text-xs text-[#e9d5ff] truncate">
+            <h3 className="mt-2 font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
+              {chapter.title}
+            </h3>
+            <p className="mt-1 text-sm text-[#484554] dark:text-[#b0a6cf]">
+              {subject.name} · {topic.title}
+            </p>
+            <p className="mt-2 text-xs text-[#6b6684] dark:text-[#968cb8]">
               {chapter.textbookUnit} · {subjects.length} subjects in {currentClass.shortLabel}
+            </p>
+          </div>
+          {topic.keyFormula ? (
+            <div className="rounded-2xl border border-[#e5deff] bg-white/80 p-4 dark:border-[#372a5c] dark:bg-[#19132b]">
+              <div className="text-xs font-medium text-[#6b6684] dark:text-[#968cb8]">
+                Key relation in focus
+              </div>
+              <div className="mt-1 font-mono-tabular text-sm font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
+                {topic.keyFormula}
+              </div>
             </div>
+          ) : null}
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+              <span className="font-semibold text-[#484554] dark:text-[#e9e4f8]">
+                Class curriculum progress
+              </span>
+              <span className="font-mono-tabular font-semibold text-[#5a45c8] dark:text-[#c4b5fd]">
+                {metrics.progressSummary.classCompletionPercentage}%
+              </span>
+            </div>
+            <div
+              role="progressbar"
+              aria-label="Class curriculum progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={metrics.progressSummary.classCompletionPercentage}
+              className="h-2 overflow-hidden rounded-full bg-white dark:bg-[#19132b]"
+            >
+              <div
+                className="h-full rounded-full bg-[#5a45c8] transition-all dark:bg-[#8b5cf6]"
+                style={{ width: `${metrics.progressSummary.classCompletionPercentage}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-[#6b6684] dark:text-[#968cb8]">
+              {metrics.progressSummary.completedTopics} of {totalTopicsInClass} topics completed
+            </p>
           </div>
         </div>
       </section>
@@ -239,53 +267,53 @@ export function DashboardView({
         aria-label="Workspace summary metrics"
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
+        <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-[#776d94] dark:text-[#968cb8]">
               Curriculum Progress
             </div>
             <div className="mt-1.5 flex items-baseline justify-between gap-2">
-              <span className="font-display text-2xl font-bold text-[#1b1430] dark:text-[#f3f0fc] tabular-nums">
+              <span className="font-display text-2xl font-bold text-[#1b1831] dark:text-[#f3f0fc] tabular-nums">
                 {metrics.progressSummary.classCompletionPercentage}%
               </span>
-              <span className="text-xs font-mono-tabular text-[#5b5276] dark:text-[#b0a6cf]">
+              <span className="text-xs font-mono-tabular text-[#6b6684] dark:text-[#b0a6cf]">
                 {metrics.progressSummary.completedTopics}/{totalTopicsInClass} topics
               </span>
             </div>
           </div>
           <div className="space-y-1.5">
             <div
-              className="w-full h-1.5 rounded-full bg-[#efeaf9] dark:bg-[#2a2147] overflow-hidden"
+              className="w-full h-1.5 rounded-full bg-[#ece6ff] dark:bg-[#2a2147] overflow-hidden"
               aria-hidden="true"
             >
               <div
-                className="h-full bg-[#6d28d9] dark:bg-[#8b5cf6] transition-all"
+                className="h-full bg-[#5a45c8] dark:bg-[#8b5cf6] transition-all"
                 style={{ width: `${metrics.progressSummary.classCompletionPercentage}%` }}
               />
             </div>
-            <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+            <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
               {subjects.length} active subjects in {currentClass.label}
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
+        <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-[#776d94] dark:text-[#968cb8]">
               Daily Study Time
             </div>
             <div className="mt-1.5 flex items-baseline justify-between gap-2">
-              <span className="font-display text-2xl font-bold text-[#1b1430] dark:text-[#f3f0fc] tabular-nums">
+              <span className="font-display text-2xl font-bold text-[#1b1831] dark:text-[#f3f0fc] tabular-nums">
                 {metrics.totalStudyMinutes} min
               </span>
-              <span className="text-xs font-mono-tabular text-[#5b5276] dark:text-[#b0a6cf]">
+              <span className="text-xs font-mono-tabular text-[#6b6684] dark:text-[#b0a6cf]">
                 Goal {profile.dailyGoalMinutes}m
               </span>
             </div>
           </div>
           <div className="space-y-1.5">
             <div
-              className="w-full h-1.5 rounded-full bg-[#efeaf9] dark:bg-[#2a2147] overflow-hidden"
+              className="w-full h-1.5 rounded-full bg-[#ece6ff] dark:bg-[#2a2147] overflow-hidden"
               aria-hidden="true"
             >
               <div
@@ -293,51 +321,51 @@ export function DashboardView({
                 style={{ width: `${metrics.goalProgressPct}%` }}
               />
             </div>
-            <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+            <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
               {focusSessions.length} focus blocks · {metrics.progressSummary.averageMastery}% mastery
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
+        <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-[#776d94] dark:text-[#968cb8]">
               Assessment Mastery
             </div>
             <div className="mt-1.5 flex items-baseline justify-between gap-2">
-              <span className="font-display text-2xl font-bold text-[#1b1430] dark:text-[#f3f0fc] tabular-nums">
+              <span className="font-display text-2xl font-bold text-[#1b1831] dark:text-[#f3f0fc] tabular-nums">
                 {metrics.averageScore !== null ? `${metrics.averageScore}%` : 'No attempts'}
               </span>
               <button
                 type="button"
                 onClick={() => onNavigate('quizzes')}
-                className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
+                className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
               >
                 Practice
               </button>
             </div>
           </div>
-          <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+          <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
             {quizAttempts.length} {quizAttempts.length === 1 ? 'quiz' : 'quizzes'} ·{' '}
             {testAttempts.length} {testAttempts.length === 1 ? 'test' : 'tests'} recorded
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
+        <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-3">
           <div>
             <div className="text-xs font-medium text-[#776d94] dark:text-[#968cb8]">
               Study Plan &amp; Notes
             </div>
             <div className="mt-1.5 flex items-baseline justify-between gap-2">
-              <span className="font-display text-2xl font-bold text-[#1b1430] dark:text-[#f3f0fc] tabular-nums">
+              <span className="font-display text-2xl font-bold text-[#1b1831] dark:text-[#f3f0fc] tabular-nums">
                 {plannerSummary.completedTasks} / {plannerSummary.totalTasks}
               </span>
-              <span className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+              <span className="text-xs font-medium text-[#5a45c8] dark:text-[#c4b5fd]">
                 {cloudStatusLabel}
               </span>
             </div>
           </div>
-          <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+          <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
             {plannerSummary.remainingMinutes} min planned · {notes.length} saved{' '}
             {notes.length === 1 ? 'note' : 'notes'}
           </div>
@@ -346,20 +374,20 @@ export function DashboardView({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-7 space-y-6">
-          <section className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
+          <section className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
             <div className="flex items-center justify-between gap-4 mb-5">
               <div>
-                <h3 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <h3 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   {currentClass.label} Subjects
                 </h3>
-                <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                   Select any subject to open its textbook chapters and track topic mastery
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => onNavigate('explorer')}
-                className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
               >
                 View All Classes
               </button>
@@ -374,41 +402,41 @@ export function DashboardView({
                     onSelectSubjectContext(subj.subjectId);
                     onNavigate('explorer');
                   }}
-                  className="text-left p-4 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] dark:hover:border-[#8b5cf6] transition-colors cursor-pointer group flex flex-col justify-between gap-3"
+                  className="text-left p-4 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] dark:hover:border-[#8b5cf6] transition-colors cursor-pointer group flex flex-col justify-between gap-3"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-mono-tabular text-[#6d28d9] dark:text-[#c4b5fd]">
+                      <span className="text-xs font-mono-tabular text-[#5a45c8] dark:text-[#c4b5fd]">
                         {subj.subjectCode}
                       </span>
                       <ArrowRight
-                        className="w-4 h-4 text-[#776d94] group-hover:text-[#6d28d9] dark:group-hover:text-[#c4b5fd] transition-colors"
+                        className="w-4 h-4 text-[#776d94] group-hover:text-[#5a45c8] dark:group-hover:text-[#c4b5fd] transition-colors"
                         aria-hidden="true"
                       />
                     </div>
-                    <div className="mt-1.5 font-display text-base font-semibold text-[#1b1430] dark:text-[#f3f0fc]">
+                    <div className="mt-1.5 font-display text-base font-semibold text-[#1b1831] dark:text-[#f3f0fc]">
                       {subj.subjectName}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                    <div className="flex items-center justify-between gap-2 text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
                       <span>
                         {subj.chaptersCount} {subj.chaptersCount === 1 ? 'chapter' : 'chapters'} ·{' '}
                         {subj.completedTopics}/{subj.totalTopics} topics
                       </span>
                       {subj.avgScore !== null ? (
-                        <span className="font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                        <span className="font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                           {subj.avgScore}%
                         </span>
                       ) : null}
                     </div>
                     <div
-                      className="w-full h-1.5 rounded-full bg-[#e5dff4] dark:bg-[#2e244d] overflow-hidden"
+                      className="w-full h-1.5 rounded-full bg-[#e5deff] dark:bg-[#2e244d] overflow-hidden"
                       aria-hidden="true"
                     >
                       <div
-                        className="h-full bg-[#6d28d9] dark:bg-[#8b5cf6] transition-all"
+                        className="h-full bg-[#5a45c8] dark:bg-[#8b5cf6] transition-all"
                         style={{ width: `${subj.completionPct}%` }}
                       />
                     </div>
@@ -418,35 +446,35 @@ export function DashboardView({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#efeaf9] dark:divide-[#2a2147]">
+          <section className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#ece6ff] dark:divide-[#2a2147]">
               <div className="space-y-3 pb-5 md:pb-0 md:pr-6">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                  <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                     Saved Notes ({notes.length})
                   </h3>
                   <button
                     type="button"
                     onClick={() => onNavigate('notes')}
-                    className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
+                    className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
                   >
                     Notes Studio
                   </button>
                 </div>
 
                 {recentNotes.length === 0 ? (
-                  <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                  <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                     No saved study notes yet. Generate AI notes or write revision summaries in Notes
                     Studio.
                   </p>
                 ) : (
-                  <ul className="divide-y divide-[#efeaf9] dark:divide-[#2a2147]">
+                  <ul className="divide-y divide-[#ece6ff] dark:divide-[#2a2147]">
                     {recentNotes.map((note) => (
                       <li key={note.id} className="py-2.5 first:pt-0 last:pb-0">
-                        <div className="text-xs font-medium text-[#1b1430] dark:text-[#f3f0fc] truncate">
+                        <div className="text-xs font-medium text-[#1b1831] dark:text-[#f3f0fc] truncate">
                           {note.title}
                         </div>
-                        <div className="text-[11px] text-[#5b5276] dark:text-[#b0a6cf] mt-0.5">
+                        <div className="text-[11px] text-[#6b6684] dark:text-[#b0a6cf] mt-0.5">
                           {note.subject} · {note.noteType}
                         </div>
                       </li>
@@ -457,38 +485,38 @@ export function DashboardView({
 
               <div className="space-y-3 pt-4 md:pt-0 md:pl-6">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                  <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                     Recent Scores ({metrics.totalAssessments})
                   </h3>
                   <button
                     type="button"
                     onClick={() => onNavigate('analytics')}
-                    className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
+                    className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline whitespace-nowrap cursor-pointer"
                   >
                     Analytics
                   </button>
                 </div>
 
                 {metrics.recentAssessments.length === 0 ? (
-                  <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                  <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                     No quiz or chapter test scores recorded yet. Run a curriculum check in Quizzes.
                   </p>
                 ) : (
-                  <ul className="divide-y divide-[#efeaf9] dark:divide-[#2a2147]">
+                  <ul className="divide-y divide-[#ece6ff] dark:divide-[#2a2147]">
                     {metrics.recentAssessments.map((item) => (
                       <li
                         key={item.id}
                         className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2"
                       >
                         <div className="min-w-0">
-                          <div className="text-xs font-medium text-[#1b1430] dark:text-[#f3f0fc] truncate">
+                          <div className="text-xs font-medium text-[#1b1831] dark:text-[#f3f0fc] truncate">
                             {item.kind}: {item.label}
                           </div>
                           <div className="text-[11px] text-[#776d94] dark:text-[#968cb8]">
                             {formatAttemptTimestamp(item.completedAt)}
                           </div>
                         </div>
-                        <span className="font-mono-tabular text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] shrink-0">
+                        <span className="font-mono-tabular text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] shrink-0">
                           {item.percentage}%
                         </span>
                       </li>
@@ -501,13 +529,13 @@ export function DashboardView({
         </div>
 
         <div className="lg:col-span-5 space-y-6">
-          <section className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
+          <section className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <h3 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   Upcoming Study Plan
                 </h3>
-                <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
                   {plannerSummary.completedTasks} of {plannerSummary.totalTasks} completed ·{' '}
                   {plannerSummary.remainingMinutes} min remaining
                 </p>
@@ -515,7 +543,7 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('planner')}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Full Planner</span>
@@ -532,19 +560,19 @@ export function DashboardView({
             ) : null}
 
             {metrics.upcomingTasks.length === 0 ? (
-              <div className="py-4 text-xs text-[#5b5276] dark:text-[#b0a6cf] space-y-2">
+              <div className="py-4 text-xs text-[#6b6684] dark:text-[#b0a6cf] space-y-2">
                 <p>No study tasks scheduled yet. Add a study block in your planner.</p>
                 <button
                   type="button"
                   onClick={() => onNavigate('planner')}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline cursor-pointer"
                 >
                   <span>Schedule First Study Block</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             ) : (
-              <ul className="divide-y divide-[#efeaf9] dark:divide-[#2a2147]">
+              <ul className="divide-y divide-[#ece6ff] dark:divide-[#2a2147]">
                 {metrics.upcomingTasks.slice(0, 5).map((task) => {
                   const isBusy = busyTaskId === task.id;
                   return (
@@ -558,7 +586,7 @@ export function DashboardView({
                       >
                         {isBusy ? (
                           <Loader2
-                            className="w-4 h-4 animate-spin text-[#6d28d9] shrink-0 mt-0.5"
+                            className="w-4 h-4 animate-spin text-[#5a45c8] shrink-0 mt-0.5"
                             aria-hidden="true"
                           />
                         ) : task.completed ? (
@@ -568,7 +596,7 @@ export function DashboardView({
                           />
                         ) : (
                           <Circle
-                            className="w-4 h-4 text-[#8f84b3] group-hover:text-[#6d28d9] shrink-0 mt-0.5"
+                            className="w-4 h-4 text-[#8f84b3] group-hover:text-[#5a45c8] shrink-0 mt-0.5"
                             aria-hidden="true"
                           />
                         )}
@@ -577,12 +605,12 @@ export function DashboardView({
                             className={`text-sm font-medium ${
                               task.completed
                                 ? 'line-through text-[#776d94] dark:text-[#8f84b3]'
-                                : 'text-[#1b1430] dark:text-[#f3f0fc]'
+                                : 'text-[#1b1831] dark:text-[#f3f0fc]'
                             }`}
                           >
                             {task.title}
                           </div>
-                          <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] mt-0.5 tabular-nums">
+                          <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] mt-0.5 tabular-nums">
                             {task.subjectName} · {formatPlanDateLabel(task.planDate, task.day)} ·{' '}
                             {task.durationMinutes} min
                             {task.priority ? ` · ${task.priority}` : ''}
@@ -596,12 +624,12 @@ export function DashboardView({
             )}
           </section>
 
-          <section className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
+          <section className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
             <div>
-              <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+              <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                 Learning Workspace Shortcuts
               </h3>
-              <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+              <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                 Launch focused study tools aligned to {topic.title}
               </p>
             </div>
@@ -610,13 +638,13 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('focus')}
-                className="text-left p-3.5 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] transition-colors cursor-pointer"
+                className="text-left p-3.5 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                   <Timer className="w-4 h-4" aria-hidden="true" />
                   <span>Focus Timer</span>
                 </div>
-                <div className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                <div className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
                   {focusSessions.length} completed today
                 </div>
               </button>
@@ -624,13 +652,13 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('notes')}
-                className="text-left p-3.5 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] transition-colors cursor-pointer"
+                className="text-left p-3.5 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                   <FileText className="w-4 h-4" aria-hidden="true" />
                   <span>AI Notes Studio</span>
                 </div>
-                <div className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                <div className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
                   {notes.length} saved notes
                 </div>
               </button>
@@ -638,13 +666,13 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('numerical-lab')}
-                className="text-left p-3.5 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] transition-colors cursor-pointer"
+                className="text-left p-3.5 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                   <Calculator className="w-4 h-4" aria-hidden="true" />
                   <span>Numerical Lab</span>
                 </div>
-                <div className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                <div className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                   Step-by-step solving
                 </div>
               </button>
@@ -652,13 +680,13 @@ export function DashboardView({
               <button
                 type="button"
                 onClick={() => onNavigate('youtube')}
-                className="text-left p-3.5 rounded-xl border border-[#e5dff4] dark:border-[#2e244d] bg-[#faf8ff] dark:bg-[#221a3a] hover:border-[#6d28d9] transition-colors cursor-pointer"
+                className="text-left p-3.5 rounded-xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#221a3a] hover:border-[#5a45c8] transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                   <Youtube className="w-4 h-4" aria-hidden="true" />
                   <span>YouTube Hub</span>
                 </div>
-                <div className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                <div className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                   Curated chapter lectures
                 </div>
               </button>

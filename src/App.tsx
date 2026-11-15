@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
+import { MobileBottomNavigation } from './components/layout/MobileBottomNavigation';
 import { AchievementsView } from './components/views/AchievementsView';
 import { AnalyticsView } from './components/views/AnalyticsView';
 import { AriaTeacherView } from './components/views/AriaTeacherView';
@@ -25,7 +26,7 @@ import { ProfileSettingsView } from './components/views/ProfileSettingsView';
 import { QuizzesView } from './components/views/QuizzesView';
 import { StudyPlannerView } from './components/views/StudyPlannerView';
 import { YouTubeHubView } from './components/views/YouTubeHubView';
-import { INITIAL_NOTIFICATIONS, INITIAL_STUDY_TASKS } from './data/curriculum';
+import { INITIAL_STUDY_TASKS } from './data/curriculum';
 import type {
   AchievementRecord,
   ActiveStudyContext,
@@ -33,12 +34,13 @@ import type {
   BookmarkResourceType,
   DatabaseSyncStatus,
   DbOperationResult,
+  FocusSessionInput,
   FocusSessionRecord,
   GradeLevelId,
   NavModuleId,
-  NoteContentPayload,
+  NoteInput,
   NoteRecord,
-  NoteType,
+  NotificationInput,
   NotificationItem,
   QuizAttemptRecord,
   StudentProfile,
@@ -46,23 +48,37 @@ import type {
   StudyTask,
   TestAttemptRecord,
   UserRole,
+  VideoLearningProgress,
+  VideoLearningProgressInput,
 } from './types/studyverse';
-import { resolveDefaultContext } from './utils/curriculumHelpers';
+import { resolveContextDetails, resolveDefaultContext } from './utils/curriculumHelpers';
 import { isSupabaseConfigured, supabase } from './utils/supabase';
 import { mergeProfileFromSupabaseUser } from './utils/supabaseHelpers';
+import { isDuplicateNote } from './utils/noteHelpers';
+import { createFocusSessionRecord } from './utils/focusSessionHelpers';
 import {
   deleteBookmarkById,
   deleteNoteById,
   deleteStudyPlan,
+  deleteUserNotification,
   insertNote,
+  insertFocusSession,
   insertQuizAttempt,
   insertStudyPlan,
+  insertStudyPlans,
   insertTestAttempt,
   loadUserWorkspaceData,
+  loadUserFocusSessions,
+  loadUserNotifications,
   toggleNoteFavorite,
+  updateNoteById,
+  insertUserNotification,
+  setAllUserNotificationsRead,
+  setUserNotificationRead,
   unlockAchievementOnce,
   updateStudyPlan,
   updateStudyPlanStatus,
+  upsertVideoLearningProgress,
   upsertBookmark,
   upsertTopicProgress,
   upsertUserProfile,
@@ -81,6 +97,7 @@ const DEFAULT_PROFILE: StudentProfile = {
   targetMarks: null,
   examDate: '',
   preferredLanguage: 'English',
+  accountRole: 'student',
 };
 
 function hasAutostartParam(): boolean {
@@ -97,16 +114,24 @@ export default function App() {
     isSupabaseConfigured ? 'local_preview' : 'not_configured'
   );
   const [dbError, setDbError] = useState<string | null>(null);
+  const [authActionError, setAuthActionError] = useState<string | null>(null);
   const [dismissedDbBanner, setDismissedDbBanner] = useState(false);
 
   const [role, setRole] = useState<UserRole>('student');
   const [activeModule, setActiveModule] = useState<NavModuleId>('dashboard');
+  const [quizBoardOverride, setQuizBoardOverride] = useState<StudentProfile['board'] | null>(null);
   const [profile, setProfile] = useState<StudentProfile>(DEFAULT_PROFILE);
   const [studyContext, setStudyContext] = useState<ActiveStudyContext>(() =>
     resolveDefaultContext(DEFAULT_PROFILE.gradeId, DEFAULT_PROFILE.streamId)
   );
 
+  useEffect(() => {
+    if (activeModule !== 'quizzes') setQuizBoardOverride(null);
+  }, [activeModule]);
+
   const [tasks, setTasks] = useState<StudyTask[]>(INITIAL_STUDY_TASKS);
+  const [videoLearningProgress, setVideoLearningProgress] = useState<VideoLearningProgress[]>([]);
+  const [videoLearningProgressError, setVideoLearningProgressError] = useState<string | null>(null);
   const [progressRecords, setProgressRecords] = useState<StudentProgressRecord[]>([]);
   const [notes, setNotes] = useState<NoteRecord[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>([]);
@@ -114,13 +139,38 @@ export default function App() {
   const [bookmarks, setBookmarks] = useState<BookmarkRecord[]>([]);
   const [achievements, setAchievements] = useState<AchievementRecord[]>([]);
   const [focusSessions, setFocusSessions] = useState<FocusSessionRecord[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [focusLoadError, setFocusLoadError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationLoadError, setNotificationLoadError] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   const profileRef = useRef<StudentProfile>(profile);
   profileRef.current = profile;
+  const authUserIdRef = useRef(authUserId);
+  authUserIdRef.current = authUserId;
   const loadedUserIdRef = useRef<string | null>(null);
+
+  const clearUserScopedData = useCallback(() => {
+    profileRef.current = DEFAULT_PROFILE;
+    setProfile(DEFAULT_PROFILE);
+    setRole('student');
+    setActiveModule('dashboard');
+    setStudyContext(resolveDefaultContext(DEFAULT_PROFILE.gradeId, DEFAULT_PROFILE.streamId));
+    setTasks(INITIAL_STUDY_TASKS);
+    setVideoLearningProgress([]);
+    setVideoLearningProgressError(null);
+    setProgressRecords([]);
+    setNotes([]);
+    setQuizAttempts([]);
+    setTestAttempts([]);
+    setBookmarks([]);
+    setAchievements([]);
+    setFocusSessions([]);
+    setFocusLoadError(null);
+    setNotifications([]);
+    setNotificationLoadError(null);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -131,9 +181,14 @@ export default function App() {
       setDbStatus('loading');
       setDbError(null);
       setDismissedDbBanner(false);
+      setFocusSessions([]);
+      setFocusLoadError(null);
+      setNotifications([]);
+      setNotificationLoadError(null);
 
       const merged = mergeProfileFromSupabaseUser(profileRef.current, email ?? undefined, metadata);
       const res = await loadUserWorkspaceData(userId, merged, email);
+      if (authUserIdRef.current !== userId) return;
 
       if (res.error || !res.data) {
         setDbStatus(res.schemaMissing ? 'migrations_required' : 'error');
@@ -145,15 +200,45 @@ export default function App() {
 
       const activeProfile = res.data.profile ?? merged;
       setProfile(activeProfile);
+      setRole(activeProfile.accountRole ?? 'student');
       setStudyContext(resolveDefaultContext(activeProfile.gradeId, activeProfile.streamId));
       setProgressRecords(res.data.progressRecords);
       setTasks(res.data.studyPlans);
+      setVideoLearningProgress(res.data.videoLearningProgress);
+      setVideoLearningProgressError(res.data.videoLearningProgressError);
       setNotes(res.data.notes);
       setQuizAttempts(res.data.quizAttempts);
       setTestAttempts(res.data.testAttempts);
       setBookmarks(res.data.bookmarks);
       setAchievements(res.data.achievements);
-      setDbStatus('ready');
+      const focusResult = await loadUserFocusSessions(userId);
+      if (authUserIdRef.current !== userId) return;
+      let optionalSchemaMissing = false;
+      if (focusResult.data) {
+        setFocusSessions(focusResult.data);
+      } else {
+        setFocusSessions([]);
+        setFocusLoadError(focusResult.error);
+        if (focusResult.schemaMissing) {
+          optionalSchemaMissing = true;
+          setDbStatus('migrations_required');
+          setDbError(focusResult.error);
+        }
+      }
+      const notificationResult = await loadUserNotifications(userId);
+      if (authUserIdRef.current !== userId) return;
+      if (notificationResult.data) {
+        setNotifications(notificationResult.data);
+      } else {
+        setNotifications([]);
+        setNotificationLoadError(notificationResult.error);
+        if (notificationResult.schemaMissing) {
+          optionalSchemaMissing = true;
+          setDbStatus('migrations_required');
+          setDbError(notificationResult.error);
+        }
+      }
+      if (!optionalSchemaMissing) setDbStatus('ready');
 
       if (!res.data.profile) {
         void upsertUserProfile(userId, activeProfile);
@@ -164,6 +249,7 @@ export default function App() {
           title: 'StudyVerse Explorer',
           description: 'Set up your class profile and entered the StudyVerse learning workspace.',
         });
+        if (authUserIdRef.current !== userId) return;
         if (achRes.data) {
           setAchievements((prev) =>
             prev.some((a) => a.achievementCode === achRes.data!.achievementCode)
@@ -187,6 +273,10 @@ export default function App() {
       if (!isMounted) return;
       const user = data.session?.user;
       if (user) {
+        authUserIdRef.current = user.id;
+        if (loadedUserIdRef.current && loadedUserIdRef.current !== user.id) {
+          clearUserScopedData();
+        }
         setAuthUserId(user.id);
         setAuthUserEmail(user.email ?? null);
         setIsOnboarded(true);
@@ -207,6 +297,7 @@ export default function App() {
       }
       const user = session?.user;
       if (user) {
+        authUserIdRef.current = user.id;
         setAuthUserId(user.id);
         setAuthUserEmail(user.email ?? null);
         if (loadedUserIdRef.current !== user.id) {
@@ -216,16 +307,11 @@ export default function App() {
       } else {
         const hadAuthenticatedUser = loadedUserIdRef.current !== null;
         loadedUserIdRef.current = null;
+        authUserIdRef.current = null;
         setAuthUserId(null);
         setAuthUserEmail(null);
         if (hadAuthenticatedUser) {
-          setTasks(INITIAL_STUDY_TASKS);
-          setProgressRecords([]);
-          setNotes([]);
-          setQuizAttempts([]);
-          setTestAttempts([]);
-          setBookmarks([]);
-          setAchievements([]);
+          clearUserScopedData();
         }
         setIsPasswordRecovery(false);
         setDbStatus('local_preview');
@@ -237,7 +323,7 @@ export default function App() {
       isMounted = false;
       subscription.subscription.unsubscribe();
     };
-  }, [hydrateFromSupabase]);
+  }, [clearUserScopedData, hydrateFromSupabase]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -262,8 +348,9 @@ export default function App() {
   );
 
   const handleCompleteOnboarding = (nextProfile: StudentProfile, chosenRole: UserRole) => {
-    setProfile(nextProfile);
-    setStudyContext(resolveDefaultContext(nextProfile.gradeId, nextProfile.streamId));
+    const profileWithRole = { ...nextProfile, accountRole: chosenRole };
+    setProfile(profileWithRole);
+    setStudyContext(resolveDefaultContext(profileWithRole.gradeId, profileWithRole.streamId));
     setRole(chosenRole);
     setActiveModule(chosenRole === 'parent' ? 'parent-dashboard' : 'dashboard');
     setIsOnboarded(true);
@@ -327,18 +414,18 @@ export default function App() {
 
   const handleSignOutToAuth = async () => {
     if (supabase && authUserId) {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setAuthActionError('Could not sign out. Your account is still active; please try again.');
+        return;
+      }
     }
+    setAuthActionError(null);
     loadedUserIdRef.current = null;
+    authUserIdRef.current = null;
     setAuthUserId(null);
     setAuthUserEmail(null);
-    setTasks(INITIAL_STUDY_TASKS);
-    setProgressRecords([]);
-    setNotes([]);
-    setQuizAttempts([]);
-    setTestAttempts([]);
-    setBookmarks([]);
-    setAchievements([]);
+    clearUserScopedData();
     setDbError(null);
     setDbStatus(isSupabaseConfigured ? 'local_preview' : 'not_configured');
     setIsPasswordRecovery(false);
@@ -389,6 +476,82 @@ export default function App() {
       );
     }
     return res;
+  };
+
+  const handleUpdateNote = async (
+    noteId: string,
+    input: NoteInput
+  ): Promise<DbOperationResult<NoteRecord>> => {
+    if (isDuplicateNote(notes, input, noteId)) {
+      return {
+        data: null,
+        error: 'Another saved note already has this title and content.',
+        schemaMissing: false,
+      };
+    }
+
+    if (!authUserId) {
+      const existing = notes.find((note) => note.id === noteId);
+      if (!existing) return { data: null, error: 'Note not found', schemaMissing: false };
+      const updated: NoteRecord = {
+        ...existing,
+        ...input,
+        title: input.title.trim(),
+        updatedAt: new Date().toISOString(),
+      };
+      setNotes((prev) => prev.map((note) => (note.id === noteId ? updated : note)));
+      return { data: updated, error: null, schemaMissing: false };
+    }
+
+    const res = await updateNoteById(authUserId, noteId, input);
+    if (res.error || !res.data) {
+      if (res.schemaMissing) setDbStatus('migrations_required');
+      return res;
+    }
+    setNotes((prev) => prev.map((note) => (note.id === noteId ? res.data! : note)));
+    return res;
+  };
+
+  const handleUpdateVideoLearningProgress = async (
+    input: VideoLearningProgressInput
+  ): Promise<DbOperationResult<VideoLearningProgress>> => {
+    if (!authUserId) {
+      const localProgress: VideoLearningProgress = {
+        ...input,
+        id: `video-progress-${input.videoId}`,
+        updatedAt: new Date().toISOString(),
+      };
+      setVideoLearningProgress((current) => [
+        localProgress,
+        ...current.filter((record) => record.videoId !== input.videoId),
+      ]);
+      return { data: localProgress, error: null, schemaMissing: false };
+    }
+
+    const result = await upsertVideoLearningProgress(authUserId, input);
+    if (result.error || !result.data) {
+      if (result.schemaMissing) {
+        setVideoLearningProgressError(
+          'Apply the video learning progress migration to enable cloud sync.'
+        );
+      }
+      return result;
+    }
+    setVideoLearningProgressError(null);
+    setVideoLearningProgress((current) => [
+      result.data!,
+      ...current.filter((record) => record.videoId !== input.videoId),
+    ]);
+    return result;
+  };
+
+  const handleStartQuizFromVideo = (
+    context: ActiveStudyContext,
+    board: StudentProfile['board']
+  ) => {
+    setStudyContext(context);
+    setQuizBoardOverride(board);
+    setActiveModule('quizzes');
   };
 
   const handleToggleTask = async (taskId: string): Promise<DbOperationResult<StudyTask>> => {
@@ -453,6 +616,29 @@ export default function App() {
     return res;
   };
 
+  const handleSaveGeneratedPlan = async (
+    taskInputs: Array<Omit<StudyTask, 'id' | 'completed'>>
+  ): Promise<DbOperationResult<StudyTask[]>> => {
+    if (!authUserId) {
+      const localTasks = taskInputs.map((task, index): StudyTask => ({
+        ...task,
+        id: `task-${Date.now()}-${index}`,
+        completed: false,
+        status: 'pending',
+      }));
+      setTasks((prev) => [...localTasks, ...prev]);
+      return { data: localTasks, error: null, schemaMissing: false };
+    }
+
+    const res = await insertStudyPlans(authUserId, taskInputs);
+    if (res.error || !res.data) {
+      if (res.schemaMissing) setDbStatus('migrations_required');
+      return res;
+    }
+    setTasks((prev) => [...res.data!, ...prev]);
+    return res;
+  };
+
   const handleUpdateTask = async (
     taskId: string,
     taskInput: Omit<StudyTask, 'id'>
@@ -510,16 +696,15 @@ export default function App() {
     return res;
   };
 
-  const handleSaveNote = async (input: {
-    title: string;
-    classLevel: GradeLevelId;
-    subject: string;
-    chapterId: string | null;
-    topicId: string | null;
-    noteType: NoteType;
-    content: NoteContentPayload;
-    isFavorite?: boolean;
-  }): Promise<DbOperationResult<NoteRecord>> => {
+  const handleSaveNote = async (input: NoteInput): Promise<DbOperationResult<NoteRecord>> => {
+    if (isDuplicateNote(notes, input)) {
+      return {
+        data: null,
+        error: 'This note already exists. Edit the saved note instead of creating a duplicate.',
+        schemaMissing: false,
+      };
+    }
+
     if (!authUserId) {
       const now = new Date().toISOString();
       const localNote: NoteRecord = {
@@ -594,6 +779,13 @@ export default function App() {
         id: `quiz-${Date.now()}`,
       };
       setQuizAttempts((prev) => [localAttempt, ...prev]);
+      void handleCreateNotification({
+        title: 'Quiz completed',
+        message: `You scored ${localAttempt.scorePercentage}% on ${localAttempt.subject}.`,
+        category: 'system',
+        targetModule: 'quizzes',
+        eventKey: `quiz-attempt-${localAttempt.id}`,
+      });
       return { data: localAttempt, error: null, schemaMissing: false };
     }
 
@@ -603,6 +795,13 @@ export default function App() {
       return res;
     }
     setQuizAttempts((prev) => [res.data!, ...prev]);
+    void handleCreateNotification({
+      title: 'Quiz result saved',
+      message: `You scored ${res.data.scorePercentage}% on ${res.data.subject}.`,
+      category: 'system',
+      targetModule: 'quizzes',
+      eventKey: `quiz-attempt-${res.data.id}`,
+    });
     void unlockMilestone(
       'first-quiz',
       'Assessment Challenger',
@@ -620,6 +819,13 @@ export default function App() {
         id: `test-${Date.now()}`,
       };
       setTestAttempts((prev) => [localTest, ...prev]);
+      void handleCreateNotification({
+        title: 'Mock test completed',
+        message: `You scored ${localTest.result.percentage}% on ${localTest.subject}.`,
+        category: 'system',
+        targetModule: 'quizzes',
+        eventKey: `test-attempt-${localTest.id}`,
+      });
       return { data: localTest, error: null, schemaMissing: false };
     }
 
@@ -629,6 +835,13 @@ export default function App() {
       return res;
     }
     setTestAttempts((prev) => [res.data!, ...prev]);
+    void handleCreateNotification({
+      title: 'Mock test result saved',
+      message: `You scored ${res.data.result.percentage}% on ${res.data.subject}.`,
+      category: 'system',
+      targetModule: 'quizzes',
+      eventKey: `test-attempt-${res.data.id}`,
+    });
     void unlockMilestone(
       'first-quiz',
       'Assessment Challenger',
@@ -694,33 +907,136 @@ export default function App() {
   };
 
   const handleLogFocusSession = useCallback(
-    (label: string, minutes: number) => {
-      const now = new Date();
-      const timeLabel = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setFocusSessions((prev) => [
-        {
-          id: `focus-${Date.now()}`,
-          label,
-          minutes,
-          completedAt: timeLabel,
-        },
-        ...prev,
-      ]);
-      void unlockMilestone(
-        'focus-block',
-        'Deep Focus Initiate',
-        'Completed a focus timer session in the Focus & Concentration Center.'
-      );
+    async (input: FocusSessionInput): Promise<DbOperationResult<FocusSessionRecord>> => {
+      const sessionUserId = authUserId;
+      if (!sessionUserId) {
+        const localRecord = createFocusSessionRecord(input, `focus-${Date.now()}`);
+        setFocusSessions((prev) => [localRecord, ...prev]);
+        if (input.status === 'completed') {
+          void handleCreateNotification({
+            title: 'Focus session completed',
+            message: `${input.label} · ${localRecord.minutes} minutes of focused ${input.subject} study.`,
+            category: 'reminders',
+            targetModule: 'focus',
+            eventKey: `focus-session-${localRecord.id}`,
+          });
+        }
+        return { data: localRecord, error: null, schemaMissing: false };
+      }
+
+      const result = await insertFocusSession(sessionUserId, input);
+      if (result.error || !result.data) {
+        if (result.schemaMissing) setDbStatus('migrations_required');
+        setFocusLoadError(result.error);
+        return result;
+      }
+      if (authUserIdRef.current === sessionUserId) {
+        setFocusSessions((prev) => [result.data!, ...prev]);
+        setFocusLoadError(null);
+      }
+      if (input.status === 'completed') {
+        void handleCreateNotification({
+          title: 'Focus session completed',
+          message: `${input.label} · ${result.data.minutes} minutes of focused ${input.subject} study.`,
+          category: 'reminders',
+          targetModule: 'focus',
+          eventKey: `focus-session-${result.data.id}`,
+        });
+        void unlockMilestone(
+          'focus-block',
+          'Deep Focus Initiate',
+          'Completed a focus timer session in the Focus & Concentration Center.'
+        );
+      }
+      return result;
     },
-    [unlockMilestone]
+    [authUserId, unlockMilestone]
   );
 
-  const handleMarkNotificationRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleMarkNotificationRead = async (
+    id: string
+  ): Promise<DbOperationResult<NotificationItem>> => {
+    if (!authUserId) {
+      const current = notifications.find((item) => item.id === id);
+      if (!current) return { data: null, error: 'Notification not found.', schemaMissing: false };
+      const updated = { ...current, read: true };
+      setNotifications((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      return { data: updated, error: null, schemaMissing: false };
+    }
+    const result = await setUserNotificationRead(authUserId, id, true);
+    if (result.data) {
+      setNotifications((prev) => prev.map((item) => (item.id === id ? result.data! : item)));
+    } else if (result.error) setNotificationLoadError(result.error);
+    return result;
   };
 
-  const handleMarkAllNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllNotificationsRead = async (): Promise<DbOperationResult<number>> => {
+    if (!authUserId) {
+      const count = notifications.filter((item) => !item.read).length;
+      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+      return { data: count, error: null, schemaMissing: false };
+    }
+    const result = await setAllUserNotificationsRead(authUserId);
+    if (result.error) setNotificationLoadError(result.error);
+    else setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+    return result;
+  };
+
+  const handleDismissNotification = async (
+    id: string
+  ): Promise<DbOperationResult<{ id: string }>> => {
+    if (!authUserId) {
+      setNotifications((prev) => prev.filter((item) => item.id !== id));
+      return { data: { id }, error: null, schemaMissing: false };
+    }
+    const result = await deleteUserNotification(authUserId, id);
+    if (result.error) setNotificationLoadError(result.error);
+    else setNotifications((prev) => prev.filter((item) => item.id !== id));
+    return result;
+  };
+
+  const handleRetryNotifications = async () => {
+    if (!authUserId) return;
+    setNotificationLoadError(null);
+    const result = await loadUserNotifications(authUserId);
+    if (result.error || !result.data) {
+      setNotificationLoadError(result.error);
+      if (result.schemaMissing) setDbStatus('migrations_required');
+      return;
+    }
+    setNotifications(result.data);
+  };
+
+  const handleCreateNotification = async (input: NotificationInput) => {
+    if (!authUserId) {
+      const localNotification: NotificationItem = {
+        id: `local-${input.eventKey}`,
+        title: input.title,
+        message: input.message,
+        category: input.category,
+        timestamp: new Date().toISOString(),
+        read: false,
+        targetModule: input.targetModule,
+      };
+      setNotifications((prev) =>
+        prev.some((item) => item.id === localNotification.id)
+          ? prev
+          : [localNotification, ...prev]
+      );
+      return;
+    }
+    const result = await insertUserNotification(authUserId, input);
+    if (result.error) {
+      setNotificationLoadError(result.error);
+      if (result.schemaMissing) setDbStatus('migrations_required');
+      return;
+    }
+    if (result.data) {
+      setNotifications((prev) =>
+        prev.some((item) => item.id === result.data!.id) ? prev : [result.data!, ...prev]
+      );
+      setNotificationLoadError(null);
+    }
   };
 
   const handleSelectSubjectFromDashboard = (subjectId: string) => {
@@ -752,14 +1068,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f6fc] dark:bg-[#110d1e] text-[#1b1430] dark:text-[#f3f0fc] flex">
+    <div className="studyverse-stitch-app flex min-h-dvh bg-[#f7f5ff] text-[#1b1831] dark:bg-[#110d1e] dark:text-[#f3f0fc]">
       <Sidebar
         activeModule={activeModule}
-        onSelectModule={(mod) => {
-          setActiveModule(mod);
-          if (mod === 'parent-dashboard') setRole('parent');
-          else if (role === 'parent' && mod === 'dashboard') setRole('student');
-        }}
+        onSelectModule={setActiveModule}
         profile={profile}
         unreadNotificationsCount={unreadCount}
         onSignOutToAuth={() => void handleSignOutToAuth()}
@@ -772,7 +1084,6 @@ export default function App() {
           activeModule={activeModule}
           profile={profile}
           role={role}
-          onToggleRole={setRole}
           onSelectModule={setActiveModule}
           onOpenMobileNav={() => setMobileNavOpen(true)}
           unreadCount={unreadCount}
@@ -780,7 +1091,24 @@ export default function App() {
           onToggleDarkMode={() => setDarkMode((prev) => !prev)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8">
+          {authActionError ? (
+            <div
+              role="alert"
+              className="rounded-2xl border border-[#fecaca] dark:border-[#7f1d1d] bg-[#fef2f2] dark:bg-[#3b151a] p-4 flex items-center justify-between gap-3 text-sm text-[#b91c1c] dark:text-[#fca5a5]"
+            >
+              <span>{authActionError}</span>
+              <button
+                type="button"
+                onClick={() => setAuthActionError(null)}
+                aria-label="Dismiss sign-out error"
+                className="p-1.5 rounded-lg hover:bg-black/5 cursor-pointer"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+          ) : null}
+
           {authUserId && dbStatus === 'error' && dbError && !dismissedDbBanner ? (
             <div
               role="alert"
@@ -797,7 +1125,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => void hydrateFromSupabase(authUserId, authUserEmail)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1b1430] border border-[#fde68a] dark:border-[#78350f] font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1b1831] border border-[#fde68a] dark:border-[#78350f] font-semibold cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Retry Sync</span>
@@ -853,6 +1181,12 @@ export default function App() {
           {activeModule === 'lessons' && (
             <LessonsView
               context={studyContext}
+              board={profile.board}
+              videoProgress={videoLearningProgress}
+              videoProgressError={videoLearningProgressError}
+              isAuthenticated={Boolean(authUserId)}
+              onUpdateVideoProgress={handleUpdateVideoLearningProgress}
+              onStartQuizFromVideo={handleStartQuizFromVideo}
               onNavigate={setActiveModule}
               progressRecords={progressRecords}
               bookmarks={bookmarks}
@@ -867,43 +1201,70 @@ export default function App() {
               board={profile.board}
               onNavigate={setActiveModule}
               notes={notes}
+              dbStatus={dbStatus}
               onSaveNote={handleSaveNote}
+              onUpdateNote={handleUpdateNote}
               onToggleNoteFavorite={handleToggleNoteFavorite}
               onDeleteNote={handleDeleteNote}
             />
           )}
 
-          {activeModule === 'aria' && (
-            <AriaTeacherView context={studyContext} onNavigate={setActiveModule} />
-          )}
+          <div className={activeModule === 'aria' ? '' : 'hidden'}>
+            <AriaTeacherView
+              context={studyContext}
+              board={profile.board}
+              onNavigate={setActiveModule}
+            />
+          </div>
 
           {activeModule === 'quizzes' && (
             <QuizzesView
+              key={authUserId ?? 'guest'}
               context={studyContext}
+              board={quizBoardOverride ?? profile.board}
               onNavigate={setActiveModule}
               quizAttempts={quizAttempts}
               testAttempts={testAttempts}
               dbStatus={dbStatus}
               isAuthenticated={Boolean(authUserId)}
+              userId={authUserId}
               onSaveQuizAttempt={handleSaveQuizAttempt}
               onSaveTestAttempt={handleSaveTestAttempt}
             />
           )}
 
           {activeModule === 'numerical-lab' && (
-            <NumericalLabView context={studyContext} onNavigate={setActiveModule} />
+            <NumericalLabView
+              context={studyContext}
+              board={profile.board}
+              onNavigate={setActiveModule}
+            />
           )}
 
           {activeModule === 'focus' && (
             <FocusCenterView
               sessions={focusSessions}
+              subjectLabel={resolveContextDetails(studyContext).subject.name}
+              loadError={focusLoadError}
               onLogFocusSession={handleLogFocusSession}
               onNavigate={setActiveModule}
             />
           )}
 
           {activeModule === 'youtube' && (
-            <YouTubeHubView context={studyContext} onNavigate={setActiveModule} />
+            <YouTubeHubView
+              context={studyContext}
+              board={profile.board}
+              tasks={tasks}
+              bookmarks={bookmarks}
+              isAuthenticated={Boolean(authUserId)}
+              videoProgress={videoLearningProgress}
+              videoProgressError={videoLearningProgressError}
+              onUpdateVideoProgress={handleUpdateVideoLearningProgress}
+              onStartQuizFromVideo={handleStartQuizFromVideo}
+              onToggleBookmark={handleToggleBookmark}
+              onNavigate={setActiveModule}
+            />
           )}
 
           {activeModule === 'planner' && (
@@ -913,7 +1274,12 @@ export default function App() {
               dbStatus={dbStatus}
               dbError={dbError}
               isAuthenticated={Boolean(authUserId)}
+              videoProgress={videoLearningProgress}
+              videoProgressError={videoLearningProgressError}
+              onUpdateVideoProgress={handleUpdateVideoLearningProgress}
+              onStartQuizFromVideo={handleStartQuizFromVideo}
               onAddTask={handleAddTask}
+              onSaveGeneratedPlan={handleSaveGeneratedPlan}
               onUpdateTask={handleUpdateTask}
               onToggleTask={handleToggleTask}
               onDeleteTask={handleDeleteTask}
@@ -964,21 +1330,20 @@ export default function App() {
           {activeModule === 'notifications' && (
             <NotificationsView
               notifications={notifications}
+              loading={Boolean(authUserId && dbStatus === 'loading')}
+              error={notificationLoadError}
               onMarkRead={handleMarkNotificationRead}
               onMarkAllRead={handleMarkAllNotificationsRead}
+              onDismiss={handleDismissNotification}
+              onRetry={handleRetryNotifications}
               onNavigate={setActiveModule}
             />
           )}
 
           {activeModule === 'parent-dashboard' && (
             <ParentDashboardView
-              profile={profile}
-              tasks={tasks}
-              focusSessions={focusSessions}
-              progressRecords={progressRecords}
-              quizAttempts={quizAttempts}
-              testAttempts={testAttempts}
-              onNavigate={setActiveModule}
+              role={role}
+              userId={authUserId}
             />
           )}
 
@@ -997,6 +1362,10 @@ export default function App() {
             />
           )}
         </main>
+        <MobileBottomNavigation
+          activeModule={activeModule}
+          onSelectModule={setActiveModule}
+        />
       </div>
     </div>
   );

@@ -6,11 +6,10 @@ import { isIntermediateGrade, validateOnboardingProfile } from '../../utils/curr
 import { isSupabaseConfigured, supabase } from '../../utils/supabase';
 import {
   formatAuthErrorMessage,
-  mergeProfileFromSupabaseUser,
   validatePasswordUpdate,
   validateSignupCredentials,
 } from '../../utils/supabaseHelpers';
-import { upsertUserProfile } from '../../utils/studyverseDb';
+import { loadUserProfile, upsertUserProfile } from '../../utils/studyverseDb';
 import { ImageWithFallback } from '../common/ImageWithFallback';
 
 interface AuthOnboardingViewProps {
@@ -182,12 +181,17 @@ export function AuthOnboardingView({
         return;
       }
       if (data.user) {
-        const hydrated = mergeProfileFromSupabaseUser(
+        const profileResult = await loadUserProfile(
+          data.user.id,
           initialProfile,
-          data.user.email,
-          data.user.user_metadata
+          data.user.email
         );
-        onCompleteOnboarding(hydrated, role);
+        if (profileResult.error || !profileResult.data) {
+          setErrorMsg(profileResult.error ?? 'Could not load your saved account profile.');
+          return;
+        }
+        const savedProfile = profileResult.data;
+        onCompleteOnboarding(savedProfile, savedProfile.accountRole ?? 'student');
       }
       return;
     }
@@ -212,6 +216,7 @@ export function AuthOnboardingView({
       streamId,
       board,
       guardianName: guardianName.trim() || 'Parent / Guardian',
+      accountRole: role,
     };
 
     if (!supabase) {
@@ -234,6 +239,7 @@ export function AuthOnboardingView({
           stream: nextProfile.streamId,
           board: nextProfile.board,
           curriculum_board: nextProfile.board,
+          account_role: role,
           dailyGoalMinutes: nextProfile.dailyGoalMinutes,
           daily_study_minutes: nextProfile.dailyGoalMinutes,
           guardianName: nextProfile.guardianName,
@@ -284,36 +290,37 @@ export function AuthOnboardingView({
         streamId,
         board,
         guardianName: guardianName.trim() || 'Parent / Guardian',
+        accountRole: role,
       },
       role
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6fc] dark:bg-[#110d1e] flex items-center justify-center p-4 sm:p-6 lg:p-10">
-      <div className="w-full max-w-6xl rounded-3xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-sm">
-        <div className="lg:col-span-5 bg-[#f3effb] dark:bg-[#21183d] p-6 sm:p-8 lg:p-10 flex flex-col justify-between gap-6 border-b lg:border-b-0 lg:border-r border-[#e5dff4] dark:border-[#2e244d]">
+    <div className="studyverse-stitch-app flex min-h-dvh items-center justify-center bg-[#f7f5ff] p-4 dark:bg-[#110d1e] sm:p-6 lg:p-10">
+      <div className="w-full max-w-6xl rounded-3xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch shadow-sm">
+        <div className="lg:col-span-5 bg-[#f0ebff] dark:bg-[#21183d] p-6 sm:p-8 lg:p-10 flex flex-col justify-between gap-6 border-b lg:border-b-0 lg:border-r border-[#e5deff] dark:border-[#2e244d]">
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-[#6d28d9] text-white flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#5a45c8] text-white flex items-center justify-center">
                 <GraduationCap className="w-5 h-5" aria-hidden="true" />
               </div>
-              <span className="font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+              <span className="font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                 StudyVerse
               </span>
             </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#1b1430] dark:text-[#f3f0fc] text-balance leading-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#1b1831] dark:text-[#f3f0fc] text-balance leading-tight">
               Structured AI learning for{' '}
               <span className="whitespace-nowrap">Classes 5–10</span> &amp; Intermediate
             </h1>
-            <p className="mt-3 text-sm sm:text-base text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+            <p className="mt-3 text-sm sm:text-base text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
               Explore textbook-aligned chapters, review earlier classes, practice numericals, and track
               daily focus sessions from one cohesive StudyVerse workspace.
             </p>
           </div>
 
-          <div className="rounded-2xl overflow-hidden border border-[#e5dff4] dark:border-[#372a5c] aspect-video">
+          <div className="rounded-2xl overflow-hidden border border-[#e5deff] dark:border-[#372a5c] aspect-video">
             <ImageWithFallback
               src="/src/assets/images/studyverse_hero_banner_1794676730762.jpg"
               alt="StudyVerse open textbook and geometric learning illustration"
@@ -322,8 +329,8 @@ export function AuthOnboardingView({
             />
           </div>
 
-          <div className="flex items-start gap-2.5 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
-            <ShieldCheck className="w-4 h-4 text-[#6d28d9] dark:text-[#a78bfa] shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="flex items-start gap-2.5 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
+            <ShieldCheck className="w-4 h-4 text-[#5a45c8] dark:text-[#a78bfa] shrink-0 mt-0.5" aria-hidden="true" />
             <span>
               {isSupabaseConfigured
                 ? 'Your account is securely connected. Save your class progress, notes, study plans, and quiz history across devices.'
@@ -336,14 +343,14 @@ export function AuthOnboardingView({
           {isPasswordRecovery ? (
             <form onSubmit={handlePasswordRecoverySubmit} className="space-y-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#ede9fe] dark:bg-[#2c214f] text-[#6d28d9] dark:text-[#c4b5fd] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#e5deff] dark:bg-[#2c214f] text-[#5a45c8] dark:text-[#c4b5fd] flex items-center justify-center">
                   <KeyRound className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                  <h2 className="font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                     Set a New Password
                   </h2>
-                  <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                  <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                     Choose a strong password for your StudyVerse account.
                   </p>
                 </div>
@@ -352,7 +359,7 @@ export function AuthOnboardingView({
               <div>
                 <label
                   htmlFor="sv-recovery-password"
-                  className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                  className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                 >
                   New Password
                 </label>
@@ -365,14 +372,14 @@ export function AuthOnboardingView({
                     setErrorMsg(null);
                   }}
                   placeholder="At least 6 characters"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="sv-recovery-confirm"
-                  className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                  className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                 >
                   Confirm New Password
                 </label>
@@ -385,12 +392,12 @@ export function AuthOnboardingView({
                     setErrorMsg(null);
                   }}
                   placeholder="Re-enter your new password"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                 />
               </div>
 
               {statusNotice ? (
-                <p className="text-sm text-[#6d28d9] dark:text-[#c4b5fd] font-medium" role="status">
+                <p className="text-sm text-[#5a45c8] dark:text-[#c4b5fd] font-medium" role="status">
                   {statusNotice}
                 </p>
               ) : null}
@@ -407,7 +414,7 @@ export function AuthOnboardingView({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <span>{isSubmitting ? 'Updating...' : 'Update Password'}</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -417,7 +424,7 @@ export function AuthOnboardingView({
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div
-                  className="inline-flex p-1 rounded-xl bg-[#f3effb] dark:bg-[#221a3a] border border-[#e5dff4] dark:border-[#2e244d]"
+                  className="inline-flex p-1 rounded-xl bg-[#f0ebff] dark:bg-[#221a3a] border border-[#e5deff] dark:border-[#2e244d]"
                   role="tablist"
                   aria-label="Account mode"
                 >
@@ -428,8 +435,8 @@ export function AuthOnboardingView({
                     onClick={() => handleSwitchMode('onboarding')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       authMode === 'onboarding'
-                        ? 'bg-white dark:bg-[#322657] text-[#5b21b6] dark:text-[#f3f0fc] shadow-xs'
-                        : 'text-[#5b5276] dark:text-[#b0a6cf]'
+                        ? 'bg-white dark:bg-[#322657] text-[#442cb2] dark:text-[#f3f0fc] shadow-xs'
+                        : 'text-[#6b6684] dark:text-[#b0a6cf]'
                     }`}
                   >
                     Create Student Account
@@ -441,47 +448,49 @@ export function AuthOnboardingView({
                     onClick={() => handleSwitchMode('signin')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       authMode === 'signin' || authMode === 'forgot'
-                        ? 'bg-white dark:bg-[#322657] text-[#5b21b6] dark:text-[#f3f0fc] shadow-xs'
-                        : 'text-[#5b5276] dark:text-[#b0a6cf]'
+                        ? 'bg-white dark:bg-[#322657] text-[#442cb2] dark:text-[#f3f0fc] shadow-xs'
+                        : 'text-[#6b6684] dark:text-[#b0a6cf]'
                     }`}
                   >
                     Sign In
                   </button>
                 </div>
 
-                <div className="inline-flex p-1 rounded-xl bg-[#f3effb] dark:bg-[#221a3a] border border-[#e5dff4] dark:border-[#2e244d]">
-                  <button
-                    type="button"
-                    onClick={() => setRole('student')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      role === 'student'
-                        ? 'bg-white dark:bg-[#322657] text-[#5b21b6] dark:text-[#f3f0fc]'
-                        : 'text-[#5b5276] dark:text-[#b0a6cf]'
-                    }`}
-                  >
-                    Student
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('parent')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      role === 'parent'
-                        ? 'bg-white dark:bg-[#322657] text-[#5b21b6] dark:text-[#f3f0fc]'
-                        : 'text-[#5b5276] dark:text-[#b0a6cf]'
-                    }`}
-                  >
-                    Parent / Guardian
-                  </button>
-                </div>
+                {authMode === 'onboarding' ? (
+                  <div className="inline-flex p-1 rounded-xl bg-[#f0ebff] dark:bg-[#221a3a] border border-[#e5deff] dark:border-[#2e244d]">
+                    <button
+                      type="button"
+                      onClick={() => setRole('student')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        role === 'student'
+                          ? 'bg-white dark:bg-[#322657] text-[#442cb2] dark:text-[#f3f0fc]'
+                          : 'text-[#6b6684] dark:text-[#b0a6cf]'
+                      }`}
+                    >
+                      Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('parent')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        role === 'parent'
+                          ? 'bg-white dark:bg-[#322657] text-[#442cb2] dark:text-[#f3f0fc]'
+                          : 'text-[#6b6684] dark:text-[#b0a6cf]'
+                      }`}
+                    >
+                      Parent / Guardian
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               {authMode === 'forgot' ? (
                 <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
                   <div>
-                    <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                    <h2 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                       Reset Your StudyVerse Password
                     </h2>
-                    <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+                    <p className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                       Enter your account email and we will send you a secure reset link.
                     </p>
                   </div>
@@ -489,7 +498,7 @@ export function AuthOnboardingView({
                   <div>
                     <label
                       htmlFor="sv-forgot-email"
-                      className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                      className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                     >
                       Registered Email Address
                     </label>
@@ -503,14 +512,14 @@ export function AuthOnboardingView({
                         setStatusNotice(null);
                       }}
                       placeholder="student@studyverse.edu"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                     />
                   </div>
 
                   {statusNotice ? (
                     <div
                       role="status"
-                      className="p-3 rounded-xl bg-[#f5f2ff] dark:bg-[#221a3a] border border-[#ddd6fe] dark:border-[#372a5c] text-sm text-[#5b21b6] dark:text-[#c4b5fd]"
+                      className="p-3 rounded-xl bg-[#f0ebff] dark:bg-[#221a3a] border border-[#ddd6fe] dark:border-[#372a5c] text-sm text-[#442cb2] dark:text-[#c4b5fd]"
                     >
                       {statusNotice}
                     </div>
@@ -530,7 +539,7 @@ export function AuthOnboardingView({
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
                       >
                         <span>{isSubmitting ? 'Sending Link...' : 'Send Reset Link'}</span>
                         <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -539,7 +548,7 @@ export function AuthOnboardingView({
                       <button
                         type="button"
                         onClick={() => handleSwitchMode('signin')}
-                        className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] text-xs font-semibold text-[#4c4366] dark:text-[#c4b5fd] hover:bg-[#f5f2ff] dark:hover:bg-[#221a3a] transition-colors whitespace-nowrap cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl border border-[#e5deff] dark:border-[#372a5c] text-xs font-semibold text-[#484554] dark:text-[#c4b5fd] hover:bg-[#f0ebff] dark:hover:bg-[#221a3a] transition-colors whitespace-nowrap cursor-pointer"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Back to Sign In</span>
@@ -549,7 +558,7 @@ export function AuthOnboardingView({
                     <button
                       type="button"
                       onClick={handleLocalPreviewEntry}
-                      className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline cursor-pointer"
+                      className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline cursor-pointer"
                     >
                       Continue Without Account
                     </button>
@@ -563,7 +572,7 @@ export function AuthOnboardingView({
                         <div>
                           <label
                             htmlFor="sv-student-name"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Student Full Name
                           </label>
@@ -576,13 +585,13 @@ export function AuthOnboardingView({
                               setErrorMsg(null);
                             }}
                             placeholder="e.g. Ananya Sharma"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           />
                         </div>
                         <div>
                           <label
                             htmlFor="sv-student-email"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Email Address
                           </label>
@@ -595,7 +604,7 @@ export function AuthOnboardingView({
                               setErrorMsg(null);
                             }}
                             placeholder="student@studyverse.edu"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           />
                         </div>
                       </div>
@@ -604,7 +613,7 @@ export function AuthOnboardingView({
                         <div>
                           <label
                             htmlFor="sv-onboard-password"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Password
                           </label>
@@ -617,13 +626,13 @@ export function AuthOnboardingView({
                               setErrorMsg(null);
                             }}
                             placeholder="At least 6 characters"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           />
                         </div>
                         <div>
                           <label
                             htmlFor="sv-onboard-confirm-password"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Confirm Password
                           </label>
@@ -636,13 +645,13 @@ export function AuthOnboardingView({
                               setErrorMsg(null);
                             }}
                             placeholder="Re-enter your password"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <span className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-2">
+                        <span className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-2">
                           Select Current Class / Year
                         </span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -656,8 +665,8 @@ export function AuthOnboardingView({
                                 aria-pressed={selected}
                                 className={`px-3 py-2 rounded-xl border text-sm font-medium text-center transition-colors cursor-pointer whitespace-nowrap ${
                                   selected
-                                    ? 'bg-[#6d28d9] border-[#6d28d9] text-white'
-                                    : 'bg-white dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#372a5c] text-[#4c4366] dark:text-[#c4b5fd] hover:bg-[#f5f2ff] dark:hover:bg-[#2a2048]'
+                                    ? 'bg-[#5a45c8] border-[#5a45c8] text-white'
+                                    : 'bg-white dark:bg-[#221a3a] border-[#e5deff] dark:border-[#372a5c] text-[#484554] dark:text-[#c4b5fd] hover:bg-[#f0ebff] dark:hover:bg-[#2a2048]'
                                 }`}
                               >
                                 {cls.shortLabel}
@@ -669,7 +678,7 @@ export function AuthOnboardingView({
 
                       {isIntermediateGrade(gradeId) ? (
                         <div>
-                          <span className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-2">
+                          <span className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-2">
                             Intermediate Stream
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -686,8 +695,8 @@ export function AuthOnboardingView({
                                   aria-pressed={selected}
                                   className={`px-3 py-2 rounded-xl border text-left transition-colors cursor-pointer ${
                                     selected
-                                      ? 'bg-[#ede9fe] dark:bg-[#322657] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
-                                      : 'bg-white dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#372a5c] text-[#4c4366] dark:text-[#b0a6cf]'
+                                      ? 'bg-[#e5deff] dark:bg-[#322657] border-[#5a45c8] text-[#442cb2] dark:text-[#f3f0fc]'
+                                      : 'bg-white dark:bg-[#221a3a] border-[#e5deff] dark:border-[#372a5c] text-[#484554] dark:text-[#b0a6cf]'
                                   }`}
                                 >
                                   <div className="text-sm font-semibold">{opt.label}</div>
@@ -703,7 +712,7 @@ export function AuthOnboardingView({
                         <div>
                           <label
                             htmlFor="sv-board"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Curriculum Board
                           </label>
@@ -711,7 +720,7 @@ export function AuthOnboardingView({
                             id="sv-board"
                             value={board}
                             onChange={(e) => setBoard(e.target.value as BoardId)}
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           >
                             {BOARDS.map((b) => (
                               <option key={b} value={b}>
@@ -723,7 +732,7 @@ export function AuthOnboardingView({
                         <div>
                           <label
                             htmlFor="sv-guardian"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                           >
                             Parent / Guardian Name (Optional)
                           </label>
@@ -733,7 +742,7 @@ export function AuthOnboardingView({
                             value={guardianName}
                             onChange={(e) => setGuardianName(e.target.value)}
                             placeholder="e.g. Rajesh Sharma"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                           />
                         </div>
                       </div>
@@ -743,7 +752,7 @@ export function AuthOnboardingView({
                       <div>
                         <label
                           htmlFor="sv-signin-email"
-                          className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8] mb-1.5"
+                          className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8] mb-1.5"
                         >
                           Email Address
                         </label>
@@ -757,7 +766,7 @@ export function AuthOnboardingView({
                             setErrorMsg(null);
                           }}
                           placeholder="student@studyverse.edu"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                         />
                       </div>
 
@@ -765,14 +774,14 @@ export function AuthOnboardingView({
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <label
                             htmlFor="sv-signin-password"
-                            className="block text-sm font-medium text-[#1b1430] dark:text-[#e9e4f8]"
+                            className="block text-sm font-medium text-[#1b1831] dark:text-[#e9e4f8]"
                           >
                             Password
                           </label>
                           <button
                             type="button"
                             onClick={() => handleSwitchMode('forgot')}
-                            className="text-xs font-semibold text-[#6d28d9] dark:text-[#c4b5fd] hover:underline cursor-pointer"
+                            className="text-xs font-semibold text-[#5a45c8] dark:text-[#c4b5fd] hover:underline cursor-pointer"
                           >
                             Forgot password?
                           </button>
@@ -786,7 +795,7 @@ export function AuthOnboardingView({
                             setErrorMsg(null);
                           }}
                           placeholder="Enter your StudyVerse password"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#6d28d9]"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
                         />
                       </div>
 
@@ -795,7 +804,7 @@ export function AuthOnboardingView({
                           type="button"
                           disabled={isSubmitting}
                           onClick={() => void handleGoogleSignIn()}
-                          className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] hover:bg-[#f3effb] dark:hover:bg-[#2a2048] text-sm font-medium text-[#1b1430] dark:text-[#f3f0fc] transition-colors cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] hover:bg-[#f0ebff] dark:hover:bg-[#2a2048] text-sm font-medium text-[#1b1831] dark:text-[#f3f0fc] transition-colors cursor-pointer"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                             <path
@@ -824,7 +833,7 @@ export function AuthOnboardingView({
                   {statusNotice ? (
                     <div
                       role="status"
-                      className="p-3 rounded-xl bg-[#f5f2ff] dark:bg-[#221a3a] border border-[#ddd6fe] dark:border-[#372a5c] text-sm text-[#5b21b6] dark:text-[#c4b5fd]"
+                      className="p-3 rounded-xl bg-[#f0ebff] dark:bg-[#221a3a] border border-[#ddd6fe] dark:border-[#372a5c] text-sm text-[#442cb2] dark:text-[#c4b5fd]"
                     >
                       {statusNotice}
                     </div>
@@ -844,7 +853,7 @@ export function AuthOnboardingView({
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
                       >
                         <span>
                           {isSubmitting
@@ -861,7 +870,7 @@ export function AuthOnboardingView({
                       <button
                         type="button"
                         onClick={handleLocalPreviewEntry}
-                        className="px-4 py-3 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] text-xs font-semibold text-[#4c4366] dark:text-[#c4b5fd] hover:bg-[#f5f2ff] dark:hover:bg-[#221a3a] transition-colors whitespace-nowrap cursor-pointer"
+                        className="px-4 py-3 rounded-xl border border-[#e5deff] dark:border-[#372a5c] text-xs font-semibold text-[#484554] dark:text-[#c4b5fd] hover:bg-[#f0ebff] dark:hover:bg-[#221a3a] transition-colors whitespace-nowrap cursor-pointer"
                       >
                         Continue Without Account
                       </button>

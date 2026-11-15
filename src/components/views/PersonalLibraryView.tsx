@@ -6,6 +6,11 @@ import type {
   NavModuleId,
   NoteRecord,
 } from '../../types/studyverse';
+import {
+  formatVideoDuration,
+  getSafeYouTubeThumbnailUrl,
+  isValidYouTubeVideoId,
+} from '../../utils/youtubeHelpers';
 
 interface PersonalLibraryViewProps {
   onNavigate: (module: NavModuleId) => void;
@@ -119,13 +124,13 @@ export function PersonalLibraryView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-5">
+      <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+            <h2 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
               Personal Learning Library
             </h2>
-            <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+            <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
               {notes.length} saved {notes.length === 1 ? 'note' : 'notes'} · {bookmarks.length}{' '}
               {bookmarks.length === 1 ? 'bookmark' : 'bookmarks'}
             </p>
@@ -142,18 +147,18 @@ export function PersonalLibraryView({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Filter library items"
                 placeholder="Filter saved items..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-xs text-[#1b1430] dark:text-[#f3f0fc]"
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-xs text-[#1b1831] dark:text-[#f3f0fc]"
               />
             </div>
             <BookMarked
-              className="w-6 h-6 text-[#6d28d9] dark:text-[#a78bfa] shrink-0 hidden sm:block"
+              className="w-6 h-6 text-[#5a45c8] dark:text-[#a78bfa] shrink-0 hidden sm:block"
               aria-hidden="true"
             />
           </div>
         </div>
 
         <div
-          className="inline-flex flex-wrap gap-1.5 p-1 rounded-xl bg-[#f3effb] dark:bg-[#221a3a] border border-[#e5dff4] dark:border-[#2e244d]"
+          className="inline-flex flex-wrap gap-1.5 p-1 rounded-xl bg-[#f0ebff] dark:bg-[#221a3a] border border-[#e5deff] dark:border-[#2e244d]"
           role="tablist"
           aria-label="Library categories"
         >
@@ -166,8 +171,8 @@ export function PersonalLibraryView({
               onClick={() => setActiveTab(tab.id)}
               className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-[#322657] text-[#5b21b6] dark:text-[#f3f0fc] shadow-xs'
-                  : 'text-[#5b5276] dark:text-[#b0a6cf]'
+                  ? 'bg-white dark:bg-[#322657] text-[#442cb2] dark:text-[#f3f0fc] shadow-xs'
+                  : 'text-[#6b6684] dark:text-[#b0a6cf]'
               }`}
             >
               {tab.label}
@@ -185,17 +190,17 @@ export function PersonalLibraryView({
         ) : null}
 
         {isEmpty ? (
-          <div className="rounded-xl border border-dashed border-[#d8cff2] dark:border-[#3b2e63] bg-[#faf8ff] dark:bg-[#221a3a] p-8 text-center">
-            <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+          <div className="rounded-xl border border-dashed border-[#d8cff2] dark:border-[#3b2e63] bg-[#fcfaff] dark:bg-[#221a3a] p-8 text-center">
+            <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
               No {currentTab.label} Found
             </h3>
-            <p className="mt-1.5 text-sm text-[#5b5276] dark:text-[#b0a6cf] max-w-lg mx-auto">
+            <p className="mt-1.5 text-sm text-[#6b6684] dark:text-[#b0a6cf] max-w-lg mx-auto">
               {currentTab.emptyCopy}
             </p>
             <button
               type="button"
               onClick={() => onNavigate(currentTab.actionModule)}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
             >
               <Compass className="w-4 h-4" aria-hidden="true" />
               <span>{currentTab.actionLabel}</span>
@@ -206,15 +211,15 @@ export function PersonalLibraryView({
             {filteredNotes.map((note) => (
               <article
                 key={note.id}
-                className="p-4 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d] flex flex-col justify-between gap-3"
+                className="p-4 rounded-xl bg-[#fcfaff] dark:bg-[#221a3a] border border-[#ece6ff] dark:border-[#2e244d] flex flex-col justify-between gap-3"
               >
                 <div className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="text-[11px] font-medium text-[#6d28d9] dark:text-[#c4b5fd] uppercase">
+                      <div className="text-[11px] font-medium text-[#5a45c8] dark:text-[#c4b5fd] uppercase">
                         {note.noteType} · {note.subject}
                       </div>
-                      <h3 className="font-display text-sm font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                      <h3 className="font-display text-sm font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                         {note.title}
                       </h3>
                     </div>
@@ -226,7 +231,7 @@ export function PersonalLibraryView({
                         className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                           note.isFavorite
                             ? 'text-[#d97706] bg-[#fef3c7] dark:bg-[#3f2c12]'
-                            : 'text-[#8f84b3] hover:text-[#6d28d9]'
+                            : 'text-[#8f84b3] hover:text-[#5a45c8]'
                         }`}
                       >
                         <Star className="w-4 h-4" aria-hidden="true" />
@@ -241,11 +246,11 @@ export function PersonalLibraryView({
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                  <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                     {note.content.summary}
                   </p>
                   {note.content.formula ? (
-                    <div className="font-mono-tabular text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd]">
+                    <div className="font-mono-tabular text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
                       {note.content.formula}
                     </div>
                   ) : null}
@@ -255,40 +260,71 @@ export function PersonalLibraryView({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredBookmarks.map((bm) => (
-              <article
-                key={bm.id}
-                className="p-4 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d] flex items-start justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <div className="text-[11px] font-medium text-[#6d28d9] dark:text-[#c4b5fd] uppercase">
-                    {bm.resourceType}
-                    {bm.metadata.subject ? ` · ${bm.metadata.subject}` : ''}
-                  </div>
-                  <h3 className="mt-0.5 font-display text-sm font-bold text-[#1b1430] dark:text-[#f3f0fc]">
-                    {bm.title}
-                  </h3>
-                  {bm.metadata.subtitle ? (
-                    <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
-                      {bm.metadata.subtitle}
-                    </p>
-                  ) : null}
-                  {bm.metadata.formula ? (
-                    <div className="mt-1.5 font-mono-tabular text-xs text-[#5b21b6] dark:text-[#c4b5fd]">
-                      {bm.metadata.formula}
-                    </div>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleDeleteBookmark(bm.id)}
-                  aria-label={`Remove bookmark ${bm.title}`}
-                  className="p-1.5 rounded-lg text-[#8f84b3] hover:text-[#dc2626] transition-colors shrink-0 cursor-pointer"
+            {filteredBookmarks.map((bm) => {
+              const isVideo = bm.resourceType === 'video';
+              const validVideo = isVideo && isValidYouTubeVideoId(bm.resourceId);
+              const videoUrl = validVideo
+                ? `https://www.youtube.com/watch?v=${bm.resourceId}`
+                : null;
+              const thumbnailUrl = isVideo
+                ? getSafeYouTubeThumbnailUrl(bm.metadata.thumbnailUrl)
+                : null;
+              return (
+                <article
+                  key={bm.id}
+                  className="p-4 rounded-xl bg-[#fcfaff] dark:bg-[#221a3a] border border-[#ece6ff] dark:border-[#2e244d] flex items-start justify-between gap-3"
                 >
-                  <Trash2 className="w-4 h-4" aria-hidden="true" />
-                </button>
-              </article>
-            ))}
+                  <div className="flex min-w-0 gap-3">
+                    {isVideo && videoUrl ? (
+                      <a href={videoUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${bm.title} on YouTube`} className="h-20 w-32 shrink-0 overflow-hidden rounded-lg bg-[#221a3a]">
+                        {thumbnailUrl ? (
+                          <img src={thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[#c4b5fd]">
+                            <BookMarked className="h-6 w-6" aria-hidden="true" />
+                          </div>
+                        )}
+                      </a>
+                    ) : null}
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-medium text-[#5a45c8] dark:text-[#c4b5fd] uppercase">
+                        {bm.resourceType}
+                        {bm.metadata.subject ? ` · ${bm.metadata.subject}` : ''}
+                      </div>
+                      <h3 className="mt-0.5 font-display text-sm font-bold text-[#1b1831] dark:text-[#f3f0fc]">
+                        {bm.title}
+                      </h3>
+                      {(bm.metadata.channel || bm.metadata.subtitle) ? (
+                        <p className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
+                          {bm.metadata.channel ?? bm.metadata.subtitle}
+                          {typeof bm.metadata.durationSeconds === 'number'
+                            ? ` · ${formatVideoDuration(bm.metadata.durationSeconds)}`
+                            : ''}
+                        </p>
+                      ) : null}
+                      {bm.metadata.formula ? (
+                        <div className="mt-1.5 font-mono-tabular text-xs text-[#442cb2] dark:text-[#c4b5fd]">
+                          {bm.metadata.formula}
+                        </div>
+                      ) : null}
+                      {videoUrl ? (
+                        <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
+                          Watch video
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteBookmark(bm.id)}
+                    aria-label={`Remove bookmark ${bm.title}`}
+                    className="p-1.5 rounded-lg text-[#8f84b3] hover:text-[#dc2626] transition-colors shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>

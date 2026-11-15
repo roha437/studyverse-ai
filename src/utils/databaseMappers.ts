@@ -16,10 +16,16 @@ import type {
   StudentProfile,
   StudentProgressRecord,
   StudyPlanPriority,
+  StudyPlanMetadata,
   StudyPlanStatus,
+  StudyPlannerDay,
+  StudyPlannerPreferences,
+  StudyPlannerRevisionPreference,
+  StudySessionType,
   StudyTask,
   SubjectItem,
   TestAttemptRecord,
+  UserRole,
 } from '../types/studyverse';
 
 const VALID_GRADES: GradeLevelId[] = [
@@ -124,6 +130,10 @@ export function sanitizeBoardId(value: unknown, fallback: BoardId = 'NCERT / CBS
     : fallback;
 }
 
+function sanitizeUserRole(value: unknown, fallback: UserRole = 'student'): UserRole {
+  return value === 'parent' || value === 'student' ? value : fallback;
+}
+
 export function mapProfileRowToStudentProfile(
   row: Partial<DbProfileRow>,
   fallback: StudentProfile,
@@ -157,6 +167,7 @@ export function mapProfileRowToStudentProfile(
       typeof row.preferred_language === 'string' && row.preferred_language.trim().length > 0
         ? row.preferred_language
         : fallback.preferredLanguage ?? 'English',
+    accountRole: sanitizeUserRole(row.account_role, fallback.accountRole ?? 'student'),
   };
 }
 
@@ -178,6 +189,7 @@ export function mapStudentProfileToProfileRow(userId: string, profile: StudentPr
     exam_date: profile.examDate?.trim() ? profile.examDate.trim() : null,
     daily_study_minutes: Math.max(15, Math.min(720, Math.round(profile.dailyGoalMinutes || 90))),
     preferred_language: profile.preferredLanguage?.trim() || 'English',
+    account_role: profile.accountRole ?? 'student',
     guardian_name: profile.guardianName?.trim() ?? '',
   };
 }
@@ -245,7 +257,145 @@ export function mapStudyPlanRowToTask(row: Record<string, unknown>): StudyTask {
     status,
     completedAt: typeof row.completed_at === 'string' ? row.completed_at : null,
     createdAt: typeof row.created_at === 'string' ? row.created_at : undefined,
+    plannerMetadata: mapStudyPlanMetadata(row.planner_metadata),
   };
+}
+
+function mapStudyPlanMetadata(value: unknown): StudyPlanMetadata | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const row = value as Record<string, unknown>;
+  const metadata: StudyPlanMetadata = {};
+  const stringFields: Array<keyof StudyPlanMetadata> = [
+    'planGroupId',
+    'planTitle',
+    'planSummary',
+    'weekStartDate',
+    'targetDate',
+    'breakGuidance',
+    'classLabel',
+    'topic',
+    'learningObjective',
+    'practiceRecommendation',
+  ];
+
+  if (row.source === 'ai') metadata.source = 'ai';
+  for (const field of stringFields) {
+    const raw = row[field];
+    if (typeof raw === 'string') {
+      (metadata as Record<string, unknown>)[field] = raw.slice(0, 2_000);
+    }
+  }
+  if (
+    typeof row.board === 'string' &&
+    VALID_BOARDS.includes(row.board as BoardId)
+  ) {
+    metadata.board = row.board as BoardId;
+  }
+  if (typeof row.dailyAvailableMinutes === 'number' && Number.isFinite(row.dailyAvailableMinutes)) {
+    metadata.dailyAvailableMinutes = Math.max(15, Math.min(720, Math.round(row.dailyAvailableMinutes)));
+  }
+  if (Array.isArray(row.finalRevisionPlan)) {
+    metadata.finalRevisionPlan = row.finalRevisionPlan
+      .filter((item): item is string => typeof item === 'string')
+      .slice(0, 12)
+      .map((item) => item.slice(0, 500));
+  }
+  const sessionTypes: StudySessionType[] = [
+    'learning',
+    'practice',
+    'revision',
+    'final-revision',
+  ];
+  if (
+    typeof row.sessionType === 'string' &&
+    sessionTypes.includes(row.sessionType as StudySessionType)
+  ) {
+    metadata.sessionType = row.sessionType as StudySessionType;
+  }
+  if (Number.isInteger(row.sessionOrder) && Number(row.sessionOrder) >= 0) {
+    metadata.sessionOrder = Number(row.sessionOrder);
+  }
+  if (typeof row.startTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(row.startTime)) {
+    metadata.startTime = row.startTime;
+  }
+  if (
+    row.linkedVideo &&
+    typeof row.linkedVideo === 'object' &&
+    !Array.isArray(row.linkedVideo)
+  ) {
+    const video = row.linkedVideo as Record<string, unknown>;
+    if (
+      typeof video.videoId === 'string' &&
+      /^[A-Za-z0-9_-]{11}$/.test(video.videoId) &&
+      typeof video.title === 'string' &&
+      video.title.trim().length > 0 &&
+      typeof video.channel === 'string' &&
+      typeof video.videoUrl === 'string' &&
+      video.videoUrl === `https://www.youtube.com/watch?v=${video.videoId}`
+    ) {
+      metadata.linkedVideo = {
+        videoId: video.videoId,
+        title: video.title.slice(0, 300),
+        channel: video.channel.slice(0, 120),
+        videoUrl: video.videoUrl,
+      };
+    }
+  }
+
+  const preferences = row.plannerPreferences;
+  if (preferences && typeof preferences === 'object' && !Array.isArray(preferences)) {
+    const pref = preferences as Record<string, unknown>;
+    const days: StudyPlannerDay[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const revisionPreferences: StudyPlannerRevisionPreference[] = [
+      'spaced',
+      'balanced',
+      'exam-focused',
+    ];
+    const subjects = Array.isArray(pref.subjects)
+      ? pref.subjects.filter((item): item is string => typeof item === 'string').slice(0, 12)
+      : [];
+    const weakSubjects = Array.isArray(pref.weakSubjects)
+      ? pref.weakSubjects
+          .filter((item): item is string => typeof item === 'string')
+          .slice(0, 12)
+      : [];
+    const preferredDays = Array.isArray(pref.preferredDays)
+      ? pref.preferredDays.filter(
+          (item): item is StudyPlannerDay => typeof item === 'string' && days.includes(item as StudyPlannerDay)
+        )
+      : [];
+    if (
+      typeof pref.gradeId === 'string' &&
+      VALID_GRADES.includes(pref.gradeId as GradeLevelId) &&
+      typeof pref.board === 'string' &&
+      VALID_BOARDS.includes(pref.board as BoardId) &&
+      subjects.length > 0 &&
+      Number.isInteger(pref.dailyAvailableMinutes) &&
+      Number(pref.dailyAvailableMinutes) >= 15 &&
+      Number(pref.dailyAvailableMinutes) <= 720 &&
+      typeof pref.weekStartDate === 'string' &&
+      typeof pref.targetDate === 'string' &&
+      preferredDays.length > 0 &&
+      typeof pref.chaptersAndTopics === 'string' &&
+      typeof pref.revisionPreference === 'string' &&
+      revisionPreferences.includes(pref.revisionPreference as StudyPlannerRevisionPreference)
+    ) {
+      metadata.plannerPreferences = {
+        gradeId: pref.gradeId as GradeLevelId,
+        board: pref.board as BoardId,
+        subjects,
+        weakSubjects,
+        dailyAvailableMinutes: Number(pref.dailyAvailableMinutes),
+        weekStartDate: pref.weekStartDate,
+        targetDate: pref.targetDate,
+        preferredDays,
+        chaptersAndTopics: pref.chaptersAndTopics.slice(0, 1_500),
+        revisionPreference: pref.revisionPreference as StudyPlannerRevisionPreference,
+      } satisfies StudyPlannerPreferences;
+    }
+  }
+
+  return Object.keys(metadata).length ? metadata : undefined;
 }
 
 export function mapTaskInputToStudyPlanInsert(
@@ -265,6 +415,7 @@ export function mapTaskInputToStudyPlanInsert(
     priority: task.priority ?? 'medium',
     status,
     completed_at: status === 'completed' ? task.completedAt || new Date().toISOString() : null,
+    planner_metadata: task.plannerMetadata ?? {},
   };
 }
 
@@ -283,6 +434,7 @@ export function mapTaskInputToStudyPlanUpdate(task: Omit<StudyTask, 'id'>) {
     status,
     completed_at:
       status === 'completed' ? task.completedAt || new Date().toISOString() : null,
+    planner_metadata: task.plannerMetadata ?? {},
   };
 }
 
@@ -400,6 +552,7 @@ export function mapQuizAttemptRowToRecord(row: Record<string, unknown>): QuizAtt
     classLevel: sanitizeGradeId(row.class_level),
     subject: String(row.subject ?? ''),
     chapterId: typeof row.chapter_id === 'string' ? row.chapter_id : null,
+    topicId: typeof row.topic_id === 'string' ? row.topic_id : null,
     quizType: String(row.quiz_type ?? 'practice'),
     difficulty: String(row.difficulty ?? 'Board Standard'),
     totalQuestions: Number(row.total_questions ?? 0),
@@ -438,6 +591,7 @@ export function mapTestAttemptRowToRecord(row: Record<string, unknown>): TestAtt
       gradeLabel:
         typeof rawResult.gradeLabel === 'string' ? rawResult.gradeLabel : deriveGradeLabel(computedPct),
       chapterId: typeof rawResult.chapterId === 'string' ? rawResult.chapterId : undefined,
+      topicId: typeof rawResult.topicId === 'string' ? rawResult.topicId : undefined,
       difficulty: typeof rawResult.difficulty === 'string' ? rawResult.difficulty : undefined,
     },
     completedAt: String(row.completed_at ?? new Date().toISOString()),

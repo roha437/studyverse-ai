@@ -30,17 +30,17 @@ export function Sidebar({
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white dark:bg-[#19132b] border-r border-[#e5dff4] dark:border-[#2e244d]">
-      <div className="px-5 py-4 flex items-center justify-between border-b border-[#efeaf9] dark:border-[#2a2147]">
+    <div className="flex flex-col h-full bg-white dark:bg-[#19132b] border-r border-[#e5deff] dark:border-[#2e244d]">
+      <div className="px-5 py-4 flex items-center justify-between border-b border-[#ece6ff] dark:border-[#2a2147]">
         <button
           type="button"
           onClick={() => handleSelect('dashboard')}
-          className="flex items-center gap-3 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6d28d9] rounded-lg"
+          className="flex items-center gap-3 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5a45c8] rounded-lg"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#6d28d9] text-white flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-[#5a45c8] text-white flex items-center justify-center shrink-0 shadow-sm">
             <GraduationCap className="w-4 h-4" aria-hidden="true" />
           </div>
-          <span className="font-display text-lg font-bold tracking-tight text-[#1b1430] dark:text-[#f3f0fc] whitespace-nowrap">
+          <span className="font-display text-lg font-bold tracking-tight text-[#1b1831] dark:text-[#f3f0fc] whitespace-nowrap">
             StudyVerse
           </span>
         </button>
@@ -50,7 +50,7 @@ export function Sidebar({
             type="button"
             onClick={onCloseMobile}
             aria-label="Close navigation menu"
-            className="lg:hidden p-2 rounded-xl text-[#5b5276] dark:text-[#b0a6cf] hover:bg-[#f3effb] dark:hover:bg-[#221a3a] cursor-pointer"
+            className="lg:hidden p-2 rounded-xl text-[#6b6684] dark:text-[#b0a6cf] hover:bg-[#f0ebff] dark:hover:bg-[#221a3a] cursor-pointer"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -80,15 +80,15 @@ export function Sidebar({
                         aria-current={isActive ? 'page' : undefined}
                         className={`w-full flex items-center justify-between gap-2.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
                           isActive
-                            ? 'bg-[#ede9fe] dark:bg-[#2c214f] text-[#5b21b6] dark:text-[#e9e4f8]'
-                            : 'text-[#4c4366] dark:text-[#b0a6cf] hover:bg-[#f5f2ff] dark:hover:bg-[#221a3a] hover:text-[#1b1430] dark:hover:text-[#f3f0fc]'
+                            ? 'bg-[#e5deff] dark:bg-[#2c214f] text-[#442cb2] dark:text-[#e9e4f8]'
+                            : 'text-[#484554] dark:text-[#b0a6cf] hover:bg-[#f0ebff] dark:hover:bg-[#221a3a] hover:text-[#1b1831] dark:hover:text-[#f3f0fc]'
                         }`}
                       >
                         <span className="flex items-center gap-2.5 min-w-0">
                           <Icon
                             className={`w-4 h-4 shrink-0 ${
                               isActive
-                                ? 'text-[#6d28d9] dark:text-[#a78bfa]'
+                                ? 'text-[#5a45c8] dark:text-[#a78bfa]'
                                 : 'text-[#776d94] dark:text-[#8f84b3]'
                             }`}
                             aria-hidden="true"
@@ -96,7 +96,7 @@ export function Sidebar({
                           <span className="truncate">{item.shortTitle}</span>
                         </span>
                         {item.id === 'notifications' && unreadNotificationsCount > 0 ? (
-                          <span className="text-xs font-mono-tabular font-semibold text-[#6d28d9] dark:text-[#c4b5fd]">
+                          <span className="text-xs font-mono-tabular font-semibold text-[#5a45c8] dark:text-[#c4b5fd]">
                             {unreadNotificationsCount}
                           </span>
                         ) : null}
@@ -110,13 +110,13 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="p-3 border-t border-[#efeaf9] dark:border-[#2a2147]">
-        <div className="rounded-xl bg-[#f8f6fc] dark:bg-[#221a3a] p-3 flex items-center justify-between gap-2">
+      <div className="p-3 border-t border-[#ece6ff] dark:border-[#2a2147]">
+        <div className="rounded-xl bg-[#f7f5ff] dark:bg-[#221a3a] p-3 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-[#1b1430] dark:text-[#f3f0fc] truncate">
+            <div className="text-sm font-semibold text-[#1b1831] dark:text-[#f3f0fc] truncate">
               {profile.name}
             </div>
-            <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] truncate">
+            <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] truncate">
               {activeClass.label}
               {profile.streamId !== 'general' ? ` · ${profile.streamId.toUpperCase()}` : ''}
             </div>
@@ -126,7 +126,7 @@ export function Sidebar({
             onClick={onSignOutToAuth}
             aria-label="Sign out or switch account"
             title="Sign out or switch account"
-            className="p-2 rounded-lg text-[#5b5276] dark:text-[#b0a6cf] hover:bg-white dark:hover:bg-[#2d224d] hover:text-[#6d28d9] transition-colors shrink-0 cursor-pointer"
+            className="p-2 rounded-lg text-[#6b6684] dark:text-[#b0a6cf] hover:bg-white dark:hover:bg-[#2d224d] hover:text-[#5a45c8] transition-colors shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -137,14 +137,14 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="hidden lg:block w-64 shrink-0 h-screen sticky top-0">
+      <aside className="hidden lg:block w-60 shrink-0 h-screen sticky top-0">
         {sidebarContent}
       </aside>
 
       {mobileOpen ? (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="fixed inset-0 bg-[#1b1430]/40 backdrop-blur-xs"
+            className="fixed inset-0 bg-[#1b1831]/40 backdrop-blur-xs"
             onClick={onCloseMobile}
             aria-hidden="true"
           />

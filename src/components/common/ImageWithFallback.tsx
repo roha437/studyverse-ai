@@ -19,7 +19,7 @@ export function ImageWithFallback({
   if (hasError) {
     return (
       <div
-        className={`flex flex-col items-center justify-center bg-gradient-to-br from-[#ede9fe] via-[#f5f3ff] to-[#e0e7ff] dark:from-[#261b47] dark:via-[#1c1436] dark:to-[#1e1b4b] text-[#5b21b6] dark:text-[#c4b5fd] p-6 ${className}`}
+        className={`flex flex-col items-center justify-center bg-gradient-to-br from-[#e5deff] via-[#f5f3ff] to-[#e0e7ff] dark:from-[#261b47] dark:via-[#1c1436] dark:to-[#1e1b4b] text-[#442cb2] dark:text-[#c4b5fd] p-6 ${className}`}
         role="img"
         aria-label={alt}
       >
