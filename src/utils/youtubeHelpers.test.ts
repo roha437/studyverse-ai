@@ -114,4 +114,16 @@ test('video presentation helpers format durations, dates, and fallback search li
   assert.ok(formatPublishedDate('2025-03-15T10:00:00Z'));
   assert.equal(formatPublishedDate('invalid'), null);
   assert.match(createYouTubeSearchLink('lens formula explained'), /search_query=lens%20formula%20explained/);
+
+  const searchQuery = buildYouTubeSearchQuery({
+    query: 'solved examples',
+    gradeId: 'class-10',
+    subject: 'Physics',
+    chapter: 'Light',
+    topic: 'Lens formula',
+  });
+  const searchUrl = new URL(createYouTubeSearchLink(searchQuery));
+  assert.equal(searchUrl.origin, 'https://www.youtube.com');
+  assert.equal(searchUrl.pathname, '/results');
+  assert.match(searchUrl.searchParams.get('search_query') ?? '', /Class 10 Physics Light Lens formula solved examples/);
 });

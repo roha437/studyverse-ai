@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Bookmark,
-  BookmarkCheck,
-  CalendarDays,
-  Clock3,
   ExternalLink,
   Loader2,
   Play,
-  RefreshCw,
   Search,
   Sparkles,
   Trash2,
@@ -30,12 +25,9 @@ import {
   buildYouTubeSearchQuery,
   createVideoBookmarkInput,
   createYouTubeSearchLink,
-  formatPublishedDate,
-  formatVideoDuration,
   getSafeYouTubeThumbnailUrl,
   isValidYouTubeVideoId,
   type YouTubeSearchRequest,
-  type YouTubeSearchResult,
   type YouTubeVideo,
 } from '../../utils/youtubeHelpers';
 import { ContextBreadcrumbBar } from '../common/ContextBreadcrumbBar';
@@ -61,8 +53,6 @@ interface YouTubeHubViewProps {
   }) => Promise<DbOperationResult<BookmarkRecord | { removedId: string }>>;
   onNavigate: (module: NavModuleId) => void;
 }
-
-type DurationFilter = 'any' | 'short' | 'medium' | 'long';
 
 interface SearchOverrides {
   query?: string;
@@ -132,16 +122,8 @@ export function YouTubeHubView({
   const [chapterId, setChapterId] = useState(initialDetails.chapter.id);
   const [topicId, setTopicId] = useState(initialDetails.topic.id);
   const [query, setQuery] = useState('');
-  const [durationFilter, setDurationFilter] = useState<DurationFilter>('any');
-  const [searchResults, setSearchResults] = useState<YouTubeVideo[]>([]);
-  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [lastSearch, setLastSearch] = useState<YouTubeSearchRequest | null>(null);
-  const [resultCount, setResultCount] = useState(0);
-  const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [configurationMissing, setConfigurationMissing] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchWarning, setSearchWarning] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState(readSearchHistory);
   const [busyBookmarkId, setBusyBookmarkId] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
@@ -149,7 +131,6 @@ export function YouTubeHubView({
   const [busyProgressVideoId, setBusyProgressVideoId] = useState<string | null>(null);
   const [progressActionError, setProgressActionError] = useState<string | null>(null);
   const [progressActionMessage, setProgressActionMessage] = useState<string | null>(null);
-  const searchAbortRef = useRef<AbortController | null>(null);
 
   const cls = getClassById(gradeId);
   const availableSubjects = getAvailableSubjects(gradeId, context.streamId);
@@ -179,8 +160,6 @@ export function YouTubeHubView({
         .slice(0, 4),
     [tasks]
   );
-
-  useEffect(() => () => searchAbortRef.current?.abort(), []);
 
   useEffect(() => {
     if (!availableSubjects.length) return;
@@ -228,84 +207,42 @@ export function YouTubeHubView({
     };
   };
 
-  const runSearch = async (
-    request: YouTubeSearchRequest,
-    options: { append?: boolean; pageToken?: string } = {}
-  ) => {
-    searchAbortRef.current?.abort();
-    const controller = new AbortController();
-    searchAbortRef.current = controller;
-    setSearching(true);
-    setSearchError(null);
-    setConfigurationMissing(false);
-    setSearchWarning(null);
+  const runSearch = (request: YouTubeSearchRequest) => {
     setBookmarkMessage(null);
     const baseRequest = { ...request, query: request.query.trim() };
     setLastSearch(baseRequest);
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries({
-      ...baseRequest,
-      pageToken: options.pageToken,
-    })) {
-      if (typeof value === 'string' && value) params.set(key, value);
-    }
-
-    try {
-      const response = await fetch(`/api/youtube/search?${params.toString()}`, {
-        signal: controller.signal,
+    setSearched(true);
+    const historyItem =
+      baseRequest.query ||
+      [cls.label, baseRequest.subject, baseRequest.chapter, baseRequest.topic]
+        .filter(Boolean)
+        .join(' ');
+    if (historyItem) {
+      setSearchHistory((current) => {
+        const next = [historyItem, ...current.filter((item) => item !== historyItem)].slice(
+          0,
+          MAX_HISTORY_ITEMS
+        );
+        saveSearchHistory(next);
+        return next;
       });
-      const payload = (await response.json().catch(() => ({}))) as Partial<YouTubeSearchResult> & {
-        error?: string;
-      };
-      if (!response.ok) {
-        setConfigurationMissing(response.status === 503);
-        throw new Error(payload.error ?? 'YouTube search failed.');
-      }
-
-      const videos = Array.isArray(payload.videos) ? payload.videos : [];
-      setSearchResults((current) => options.append ? [...current, ...videos] : videos);
-      setNextPageToken(payload.nextPageToken);
-      setResultCount(typeof payload.totalResults === 'number' ? payload.totalResults : videos.length);
-      setSearchWarning(payload.warning ?? null);
-      setConfigurationMissing(false);
-      setSearched(true);
-      const historyItem =
-        baseRequest.query ||
-        [cls.label, baseRequest.subject, baseRequest.chapter, baseRequest.topic]
-          .filter(Boolean)
-          .join(' ');
-      if (historyItem) {
-        setSearchHistory((current) => {
-          const next = [historyItem, ...current.filter((item) => item !== historyItem)].slice(
-            0,
-            MAX_HISTORY_ITEMS
-          );
-          saveSearchHistory(next);
-          return next;
-        });
-      }
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setSearchError(error instanceof Error ? error.message : 'YouTube search failed.');
-      }
-    } finally {
-      if (searchAbortRef.current === controller) {
-        searchAbortRef.current = null;
-        setSearching(false);
-      }
     }
+    window.open(
+      createYouTubeSearchLink(buildYouTubeSearchQuery(baseRequest)),
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   const handleSearch = (event?: React.FormEvent) => {
     event?.preventDefault();
     const request = requestForCurrentContext();
-    setSearched(true);
     void runSearch(request);
   };
 
   const handleQuickSearch = (searchText: string, overrides: SearchOverrides = {}) => {
     setQuery(searchText);
-    void runSearch(requestForCurrentContext({ ...overrides, query: searchText }));
+    runSearch(requestForCurrentContext({ ...overrides, query: searchText }));
   };
 
   const handleBookmark = async (video: YouTubeVideo) => {
@@ -385,14 +322,6 @@ export function YouTubeHubView({
   const savedVideos = videoBookmarks
     .map(getBookmarkVideo)
     .filter((video): video is YouTubeVideo => video !== null);
-  const visibleSearchResults = searchResults.filter((video) => {
-    if (durationFilter === 'any') return true;
-    if (video.durationSeconds === undefined) return false;
-    if (durationFilter === 'short') return video.durationSeconds < 600;
-    if (durationFilter === 'medium') return video.durationSeconds >= 600 && video.durationSeconds <= 1_800;
-    return video.durationSeconds > 1_800;
-  });
-
   return (
     <div className="space-y-6">
       <ContextBreadcrumbBar
@@ -473,20 +402,9 @@ export function YouTubeHubView({
                 className="w-full rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] pl-10 pr-4 py-3 text-sm text-[#1b1831] dark:text-[#f3f0fc] focus:outline-none focus:ring-2 focus:ring-[#5a45c8]"
               />
             </div>
-            <select
-              aria-label="Filter video duration"
-              value={durationFilter}
-              onChange={(event) => setDurationFilter(event.target.value as DurationFilter)}
-              className="rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-3 py-3 text-sm text-[#1b1831] dark:text-[#f3f0fc]"
-            >
-              <option value="any">Any duration</option>
-              <option value="short">Under 10 min</option>
-              <option value="medium">10–30 min</option>
-              <option value="long">30+ min</option>
-            </select>
-            <button type="submit" disabled={searching} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5a45c8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#442cb2] disabled:opacity-60">
-              {searching ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
-              {searching ? 'Searching...' : 'Search videos'}
+            <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#5a45c8] px-5 py-3 text-sm font-semibold text-white hover:bg-[#442cb2]">
+              <Search className="h-4 w-4" aria-hidden="true" />
+              Search videos
             </button>
           </div>
         </form>
@@ -499,7 +417,7 @@ export function YouTubeHubView({
             </div>
             <div className="flex flex-wrap gap-2">
               {currentContextSearches.map((item) => (
-                <button key={item} type="button" disabled={searching} onClick={() => handleQuickSearch(item)} className="rounded-full border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff] disabled:opacity-50">
+                <button key={item} type="button" onClick={() => handleQuickSearch(item)} className="rounded-full border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff]">
                   {item}
                 </button>
               ))}
@@ -514,7 +432,7 @@ export function YouTubeHubView({
             </div>
             <div className="flex flex-wrap gap-2">
               {plannedSearches.map((task) => (
-                <button key={task.id} type="button" disabled={searching} onClick={() => handleQuickSearch(task.title, { subject: task.subjectName, chapter: null, topic: task.title })} className="max-w-full truncate rounded-full border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff] disabled:opacity-50">
+                <button key={task.id} type="button" onClick={() => handleQuickSearch(task.title, { subject: task.subjectName, chapter: null, topic: task.title })} className="max-w-full truncate rounded-full border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff]">
                   {task.subjectName}: {task.title}
                 </button>
               ))}
@@ -527,7 +445,7 @@ export function YouTubeHubView({
             <div className="text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf]">Recent searches</div>
             <div className="flex flex-wrap gap-2">
               {searchHistory.map((item) => (
-                <button key={item} type="button" disabled={searching} onClick={() => handleQuickSearch(item)} className="rounded-full bg-[#f0ebff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#6b6684] dark:text-[#b0a6cf] hover:text-[#442cb2] disabled:opacity-50">
+                <button key={item} type="button" onClick={() => handleQuickSearch(item)} className="rounded-full bg-[#f0ebff] dark:bg-[#221a3a] px-3 py-1.5 text-xs text-[#6b6684] dark:text-[#b0a6cf] hover:text-[#442cb2]">
                   {item}
                 </button>
               ))}
@@ -536,139 +454,29 @@ export function YouTubeHubView({
         ) : null}
       </section>
 
-      {searchError ? (
-        <div role="alert" className="rounded-2xl border border-[#fecaca] dark:border-[#7f1d1d] bg-[#fef2f2] dark:bg-[#3b151a] p-4 text-sm text-[#b91c1c] dark:text-[#fca5a5]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span>{searchError}</span>
-            <button type="button" disabled={searching} onClick={() => lastSearch ? void runSearch(lastSearch) : handleSearch()} className="inline-flex items-center gap-1.5 rounded-lg border border-[#fecaca] px-3 py-1.5 text-xs font-semibold disabled:opacity-50">
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Retry
-            </button>
-          </div>
-          {configurationMissing ? (
-            <div className="mt-3 rounded-xl bg-white/70 dark:bg-black/10 p-3 text-xs leading-relaxed">
-              <strong>Server setup required:</strong> add a YouTube Data API v3 key as server-side{' '}
-              <code>YOUTUBE_API_KEY</code>. No fake results are shown. You can still search the same curriculum topic directly on YouTube:
-              <a href={currentSearchLink} target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center gap-1 font-semibold underline">
-                Open YouTube search <ExternalLink className="h-3 w-3" aria-hidden="true" />
-              </a>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
       {videoProgressError ? <div role="status" className="rounded-xl border border-[#fed7aa] bg-[#fff7ed] p-3 text-xs text-[#9a3412]">Video progress sync is unavailable: {videoProgressError}</div> : null}
       {progressActionError ? <div role="alert" className="rounded-xl border border-[#fecaca] bg-[#fef2f2] p-3 text-xs text-[#b91c1c]">{progressActionError}</div> : null}
       {progressActionMessage ? <div role="status" className="rounded-xl border border-[#a7f3d0] dark:border-[#047857] bg-[#ecfdf5] dark:bg-[#102d24] p-3 text-xs text-[#047857] dark:text-[#6ee7b7]">{progressActionMessage}</div> : null}
       {bookmarkError ? <div role="alert" className="rounded-xl border border-[#fecaca] bg-[#fef2f2] p-3 text-xs text-[#b91c1c]">{bookmarkError}</div> : null}
       {bookmarkMessage ? <div role="status" className="rounded-xl border border-[#a7f3d0] dark:border-[#047857] bg-[#ecfdf5] dark:bg-[#102d24] p-3 text-xs text-[#047857] dark:text-[#6ee7b7]">{bookmarkMessage}</div> : null}
 
-      {searched && !searching && !searchError ? (
+      {searched ? (
         <section className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-2">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 sm:p-6">
             <div>
               <h3 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
-                YouTube search results
+                Your YouTube search is ready
               </h3>
-              <p className="text-xs text-[#776d94] dark:text-[#968cb8]">
-                {visibleSearchResults.length} loaded matches · {resultCount.toLocaleString()} YouTube results · Not independently syllabus-verified
+              <p className="mt-1 text-sm text-[#6b6684] dark:text-[#b0a6cf]">
+                Open YouTube to browse real videos for the selected class and curriculum topic. StudyVerse does not scrape or fabricate video results.
               </p>
             </div>
-            {lastSearch ? (
-              <a href={createYouTubeSearchLink(buildYouTubeSearchQuery(lastSearch))} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]">
-                Search directly on YouTube <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              </a>
-            ) : null}
+            <a href={currentSearchLink} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#5a45c8] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#442cb2]" aria-label="Watch videos on YouTube search results">
+              <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+              Watch on YouTube
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
           </div>
-          {searchWarning ? <p role="status" className="rounded-lg bg-[#fffbeb] p-3 text-xs text-[#92400e]">{searchWarning}</p> : null}
-          {visibleSearchResults.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#d8cff2] dark:border-[#3b2e63] bg-white dark:bg-[#19132b] p-8 text-center">
-              <h4 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">{searchResults.length > 0 ? 'No videos match this duration' : 'No videos found'}</h4>
-              <p className="mt-1.5 text-sm text-[#6b6684] dark:text-[#b0a6cf]">{searchResults.length > 0 ? 'Choose Any duration or load more results.' : 'Try a shorter phrase or search the topic directly on YouTube.'}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {visibleSearchResults.map((video) => {
-                const isSaved = videoBookmarks.some((bookmark) => bookmark.resourceId === video.videoId);
-                const dateLabel = formatPublishedDate(video.publishedAt);
-                return (
-                  <article key={video.videoId} className="overflow-hidden rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b]">
-                    <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="group relative block aspect-video overflow-hidden bg-[#221a3a]" aria-label={`Watch ${video.title} on YouTube`}>
-                      {video.thumbnailUrl ? (
-                        <img src={video.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[#c4b5fd]"><Youtube className="h-10 w-10" aria-hidden="true" /></div>
-                      )}
-                      {video.durationSeconds ? <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-xs font-semibold text-white">{formatVideoDuration(video.durationSeconds)}</span> : null}
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-white opacity-0 transition group-hover:bg-black/25 group-hover:opacity-100">
-                        <span className="rounded-full bg-[#5a45c8] p-3"><Play className="h-5 w-5 fill-current" aria-hidden="true" /></span>
-                      </span>
-                    </a>
-                    <div className="space-y-2.5 p-4">
-                      <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="line-clamp-2 block font-display text-sm font-bold text-[#1b1831] hover:text-[#442cb2] dark:text-[#f3f0fc] dark:hover:text-[#c4b5fd]">
-                        {video.title}
-                      </a>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
-                        <span>{video.channel}</span>
-                        {dateLabel ? <span className="inline-flex items-center gap-1"><CalendarDays className="h-3 w-3" aria-hidden="true" />{dateLabel}</span> : null}
-                        {video.durationSeconds ? <span className="inline-flex items-center gap-1"><Clock3 className="h-3 w-3" aria-hidden="true" />{formatVideoDuration(video.durationSeconds)}</span> : null}
-                      </div>
-                      {video.description ? <p className="line-clamp-3 text-xs leading-relaxed text-[#776d94] dark:text-[#968cb8]">{video.description}</p> : null}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label className="sr-only" htmlFor={`hub-video-progress-${video.videoId}`}>Progress for {video.title}</label>
-                        <select
-                          id={`hub-video-progress-${video.videoId}`}
-                          value={getVideoProgressStatus(video.videoId)}
-                          disabled={busyProgressVideoId === video.videoId}
-                          onChange={(event) => void handleUpdateVideoProgress(video, event.target.value as VideoLearningStatus)}
-                          className="min-w-0 flex-1 rounded-lg border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-2.5 py-2 text-xs text-[#1b1831] dark:text-[#f3f0fc] disabled:opacity-60"
-                        >
-                          <option value="not_started">Not Started</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                        </select>
-                        {getVideoProgressStatus(video.videoId) === 'completed' ? (
-                          <button
-                            type="button"
-                            onClick={() => onStartQuizFromVideo(selectedLearningContext, board)}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#5a45c8] px-2.5 py-2 text-xs font-semibold text-white hover:bg-[#442cb2]"
-                          >
-                            <Play className="h-3.5 w-3.5" aria-hidden="true" /> Start Quiz
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={busyProgressVideoId === video.videoId}
-                            onClick={() => void handleUpdateVideoProgress(video, 'completed')}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#a7f3d0] bg-[#ecfdf5] px-2.5 py-2 text-xs font-semibold text-[#047857] disabled:opacity-60"
-                          >
-                            {busyProgressVideoId === video.videoId ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
-                            Mark as Completed
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between gap-2 border-t border-[#ece6ff] dark:border-[#2e244d] pt-2.5">
-                        <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-[#5a45c8] px-3 py-2 text-xs font-semibold text-white hover:bg-[#442cb2]">
-                          <Play className="h-3.5 w-3.5" aria-hidden="true" /> Watch
-                        </a>
-                        <button type="button" disabled={busyBookmarkId === video.videoId} onClick={() => void handleBookmark(video)} className="inline-flex items-center gap-1.5 rounded-lg border border-[#e5deff] dark:border-[#372a5c] px-3 py-2 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd] disabled:opacity-50">
-                          {busyBookmarkId === video.videoId ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : isSaved ? <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" /> : <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />}
-                          {isSaved ? 'Saved' : 'Save video'}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-          {nextPageToken && lastSearch ? (
-            <div className="flex justify-center">
-              <button type="button" disabled={searching} onClick={() => void runSearch(lastSearch, { append: true, pageToken: nextPageToken })} className="inline-flex items-center gap-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-white dark:bg-[#19132b] px-4 py-2.5 text-sm font-semibold text-[#442cb2] dark:text-[#c4b5fd] disabled:opacity-50">
-                {searching ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
-                Load more videos
-              </button>
-            </div>
-          ) : null}
         </section>
       ) : null}
 
@@ -688,6 +496,41 @@ export function YouTubeHubView({
                 <div className="min-w-0 flex-1">
                   <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="line-clamp-2 text-sm font-semibold text-[#1b1831] dark:text-[#f3f0fc] hover:text-[#442cb2]">{video.title}</a>
                   <p className="mt-1 truncate text-xs text-[#776d94] dark:text-[#968cb8]">{video.channel}</p>
+                  <a href={video.videoUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#5a45c8] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#442cb2]">
+                    <Play className="h-3.5 w-3.5" aria-hidden="true" /> Watch on YouTube
+                  </a>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <label className="sr-only" htmlFor={`hub-saved-video-progress-${video.videoId}`}>Progress for {video.title}</label>
+                    <select
+                      id={`hub-saved-video-progress-${video.videoId}`}
+                      value={getVideoProgressStatus(video.videoId)}
+                      disabled={busyProgressVideoId === video.videoId}
+                      onChange={(event) => void handleUpdateVideoProgress(video, event.target.value as VideoLearningStatus)}
+                      className="min-w-0 flex-1 rounded-lg border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] px-2 py-1.5 text-xs text-[#1b1831] dark:text-[#f3f0fc] disabled:opacity-60"
+                    >
+                      <option value="not_started">Not Started</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                    {getVideoProgressStatus(video.videoId) === 'completed' ? (
+                      <button
+                        type="button"
+                        onClick={() => onStartQuizFromVideo(selectedLearningContext, board)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-[#e5deff] dark:border-[#372a5c] px-2 py-1.5 text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd]"
+                      >
+                        Start Quiz
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busyProgressVideoId === video.videoId}
+                        onClick={() => void handleUpdateVideoProgress(video, 'completed')}
+                        className="rounded-lg border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-1.5 text-xs font-semibold text-[#047857] disabled:opacity-60"
+                      >
+                        Mark complete
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <button type="button" disabled={busyBookmarkId === video.videoId} onClick={() => void handleBookmark(video)} aria-label={`Remove saved video ${video.title}`} className="rounded-lg p-2 text-[#8f84b3] hover:bg-[#fef2f2] hover:text-[#b91c1c] disabled:opacity-50">
                   {busyBookmarkId === video.videoId ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
@@ -699,8 +542,8 @@ export function YouTubeHubView({
       ) : null}
 
       <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-[#fcfaff] dark:bg-[#19132b] p-4 text-xs leading-relaxed text-[#6b6684] dark:text-[#b0a6cf]">
-        <strong className="text-[#484554] dark:text-[#d1c9e8]">Search results come from YouTube Data API.</strong>{' '}
-        StudyVerse does not scrape YouTube, autoplay videos, or claim results are syllabus-aligned. When API search is not configured, use the direct YouTube search link shown with the setup message.
+        <strong className="text-[#484554] dark:text-[#d1c9e8]">Search uses YouTube’s public results page.</strong>{' '}
+        Search terms include the selected class, subject, chapter, and topic when available. StudyVerse does not scrape YouTube or claim results are syllabus-aligned.
       </div>
     </div>
   );
