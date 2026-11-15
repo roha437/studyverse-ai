@@ -82,9 +82,9 @@ export function YouTubeHubView({ context, onNavigate }: YouTubeHubViewProps) {
         title={
           searchTriggered
             ? `Lecture query prepared: "${query}" (${durationFilter})`
-            : 'YouTube Data API v3 Integration Ready'
+            : 'StudyVerse Curated Video Library'
         }
-        description="Once your YouTube Data API key is connected, verified educational playlists and chapter lectures matching your selected class and duration filter will display here without recommended-feed distractions."
+        description="Search verified educational playlists and chapter lectures matching your selected class and duration filter—designed to keep your study session free from distractions."
         onNavigate={onNavigate}
       />
     </div>

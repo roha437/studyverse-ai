@@ -1,4 +1,4 @@
-import { ArrowRight, PlugZap } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import type { NavModuleId } from '../../types/studyverse';
 
 interface IntegrationBannerProps {
@@ -9,6 +9,13 @@ interface IntegrationBannerProps {
   compact?: boolean;
   stacked?: boolean;
 }
+
+const FRIENDLY_CATEGORY_LABEL: Record<IntegrationBannerProps['serviceName'], string> = {
+  'Gemini API': 'StudyVerse AI Companion',
+  Supabase: 'StudyVerse Cloud Sync',
+  'YouTube Data API': 'StudyVerse Video Library',
+  GitHub: 'StudyVerse Workspace',
+};
 
 export function IntegrationBanner({
   serviceName,
@@ -28,11 +35,11 @@ export function IntegrationBanner({
     >
       <div className="flex items-start gap-3.5 min-w-0">
         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#2b204d] border border-[#e5dff4] dark:border-[#3e3166] flex items-center justify-center shrink-0 text-[#6d28d9] dark:text-[#a78bfa]">
-          <PlugZap className="w-5 h-5" aria-hidden="true" />
+          <Sparkles className="w-5 h-5" aria-hidden="true" />
         </div>
         <div className="min-w-0">
           <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd] mb-0.5">
-            {serviceName} integration ready
+            {FRIENDLY_CATEGORY_LABEL[serviceName]}
           </div>
           <h3 className="text-sm font-semibold text-[#1b1430] dark:text-[#f3f0fc]">{title}</h3>
           <p className="text-sm text-[#5b5276] dark:text-[#b0a6cf] mt-1 leading-relaxed">
@@ -49,10 +56,11 @@ export function IntegrationBanner({
             stacked ? 'w-full' : ''
           }`}
         >
-          <span>View Integration Setup</span>
+          <span>Account &amp; Settings</span>
           <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </button>
       ) : null}
     </div>
   );
 }
+

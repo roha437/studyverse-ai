@@ -847,9 +847,9 @@ export const INITIAL_STUDY_TASKS: StudyTask[] = [
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-1',
-    title: 'Workspace Foundation Ready',
+    title: 'Welcome to StudyVerse',
     message:
-      'Your StudyVerse curriculum explorer for Classes 5–10 and Intermediate 1st & 2nd Year is ready. Connect Supabase and Gemini API in Settings when you are ready for live sync and AI tutoring.',
+      'Your StudyVerse curriculum explorer for Classes 5–10 and Intermediate 1st & 2nd Year is ready. Visit Account & Settings anytime to customize your academic goals.',
     category: 'system',
     timestamp: 'Just now',
     read: false,
@@ -880,30 +880,30 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 export const INTEGRATION_READINESS: IntegrationReadinessItem[] = [
   {
     id: 'supabase',
-    name: 'Supabase (Auth & Postgres)',
-    purpose: 'Student & parent authentication, profile persistence, saved notes, study plans, and analytics history.',
+    name: 'StudyVerse Account & Sync',
+    purpose: 'Student & parent sign-in, profile preferences, saved notes, study plans, and quiz history.',
     status: 'pending',
-    envVars: ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'],
+    envVars: [],
   },
   {
     id: 'gemini',
-    name: 'Google Gemini API',
+    name: 'StudyVerse AI Companion',
     purpose: 'Textbook-based AI lessons, AI Notes Generator, AI Teacher Aria, Quiz generation, and Numerical verification.',
     status: 'pending',
-    envVars: ['GEMINI_API_KEY'],
+    envVars: [],
   },
   {
     id: 'youtube',
-    name: 'YouTube Data API v3',
+    name: 'StudyVerse Video Library',
     purpose: 'Curated chapter-aligned video lectures, duration filtering, and playlist curation in the YouTube Learning Hub.',
     status: 'pending',
-    envVars: ['YOUTUBE_API_KEY'],
+    envVars: [],
   },
   {
     id: 'github',
-    name: 'GitHub Repository Sync',
-    purpose: 'Version control, CI deployment workflows, and environment secret management.',
+    name: 'StudyVerse Academic Archive',
+    purpose: 'Organized study resources and backup workspace tools.',
     status: 'pending',
-    envVars: ['GITHUB_TOKEN'],
+    envVars: [],
   },
 ];

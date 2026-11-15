@@ -192,8 +192,8 @@ export function FocusCenterView({
 
           <IntegrationBanner
             serviceName="Supabase"
-            title="Long-Term Streak Sync Ready"
-            description="Timer countdown works locally in real time. Connect Supabase to persist daily study hours across devices."
+            title="Study Session Tracking"
+            description="Your focus timer runs live in real time. Sign in to your StudyVerse account to keep track of study sessions across devices."
             onNavigate={onNavigate}
             compact
             stacked

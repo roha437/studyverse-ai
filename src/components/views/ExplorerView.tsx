@@ -1,15 +1,26 @@
 import { useMemo, useState } from 'react';
 import {
+  Bookmark,
   BookOpen,
   Bot,
   Calculator,
+  CheckCircle2,
   CheckSquare,
   FileText,
   Search,
   Youtube,
 } from 'lucide-react';
 import { CURRICULUM_CLASSES, STREAM_OPTIONS } from '../../data/curriculum';
-import type { ActiveStudyContext, GradeLevelId, NavModuleId, StreamId } from '../../types/studyverse';
+import type {
+  ActiveStudyContext,
+  BookmarkRecord,
+  BookmarkResourceType,
+  DbOperationResult,
+  GradeLevelId,
+  NavModuleId,
+  StreamId,
+  StudentProgressRecord,
+} from '../../types/studyverse';
 import {
   filterCurriculumTopics,
   getAvailableSubjects,
@@ -21,10 +32,38 @@ interface ExplorerViewProps {
   context: ActiveStudyContext;
   onUpdateContext: (next: ActiveStudyContext) => void;
   onNavigate: (module: NavModuleId) => void;
+  progressRecords: StudentProgressRecord[];
+  bookmarks: BookmarkRecord[];
+  onRecordTopicProgress: (input: {
+    classLevel: GradeLevelId;
+    subject: string;
+    chapterId: string;
+    topicId: string;
+    completionPercentage: number;
+    masteryLevel: number;
+    timeSpentMinutes: number;
+  }) => Promise<DbOperationResult<StudentProgressRecord>>;
+  onToggleBookmark: (input: {
+    resourceType: BookmarkResourceType;
+    resourceId: string;
+    title: string;
+    metadata: BookmarkRecord['metadata'];
+  }) => Promise<DbOperationResult<BookmarkRecord | { removedId: string }>>;
 }
 
-export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerViewProps) {
+export function ExplorerView({
+  context,
+  onUpdateContext,
+  onNavigate,
+  progressRecords,
+  bookmarks,
+  onRecordTopicProgress,
+  onToggleBookmark,
+}: ExplorerViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const selectedClass = getClassById(context.gradeId);
   const subjects = getAvailableSubjects(context.gradeId, context.streamId);
@@ -34,6 +73,12 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
     selectedSubject.chapters.find((c) => c.id === context.chapterId) ?? selectedSubject.chapters[0];
   const selectedTopic =
     selectedChapter.topics.find((t) => t.id === context.topicId) ?? selectedChapter.topics[0];
+
+  const topicProgress = progressRecords.find((p) => p.topicId === selectedTopic.id);
+  const isTopicCompleted = (topicProgress?.completionPercentage ?? 0) >= 100;
+  const isBookmarked = bookmarks.some(
+    (b) => b.resourceType === 'topic' && b.resourceId === selectedTopic.id
+  );
 
   const searchHits = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -95,13 +140,62 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
     });
   };
 
+  const handleQuickComplete = async () => {
+    setActionBusy(true);
+    setActionMessage(null);
+    setActionError(null);
+    const nextCompleted = !isTopicCompleted;
+    const res = await onRecordTopicProgress({
+      classLevel: context.gradeId,
+      subject: selectedSubject.name,
+      chapterId: selectedChapter.id,
+      topicId: selectedTopic.id,
+      completionPercentage: nextCompleted ? 100 : 50,
+      masteryLevel: nextCompleted ? 85 : 50,
+      timeSpentMinutes: selectedTopic.estimatedMinutes,
+    });
+    setActionBusy(false);
+    if (res.error) {
+      setActionError(res.error);
+    } else {
+      setActionMessage(
+        nextCompleted ? 'Topic marked completed (100%)' : 'Topic reset to in-progress (50%)'
+      );
+    }
+  };
+
+  const handleBookmarkTopic = async () => {
+    setActionBusy(true);
+    setActionMessage(null);
+    setActionError(null);
+    const res = await onToggleBookmark({
+      resourceType: 'topic',
+      resourceId: selectedTopic.id,
+      title: selectedTopic.title,
+      metadata: {
+        gradeId: context.gradeId,
+        subject: selectedSubject.name,
+        chapterId: selectedChapter.id,
+        topicId: selectedTopic.id,
+        subtitle: `${selectedClass.label} · ${selectedSubject.name} · ${selectedChapter.title}`,
+        formula: selectedTopic.keyFormula,
+      },
+    });
+    setActionBusy(false);
+    if (res.error) {
+      setActionError(res.error);
+    } else {
+      setActionMessage(isBookmarked ? 'Bookmark removed from Personal Library' : 'Topic saved to Personal Library');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
-              Browse Classes 5–10 & Intermediate
+              Browse Classes 5–10 &amp; Intermediate
             </h2>
             <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
               Select a class, subject, chapter, and topic to launch any StudyVerse learning tool.
@@ -179,8 +273,8 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
           </h3>
           {searchHits.length === 0 ? (
             <p className="text-sm text-[#5b5276] dark:text-[#b0a6cf]">
-              No curriculum topics matched "{searchQuery}". Try searching "Quadratic", "Optics",
-              "Calculus", or "Fractions".
+              No curriculum topics matched &ldquo;{searchQuery}&rdquo;. Try searching &ldquo;Quadratic&rdquo;,
+              &ldquo;Optics&rdquo;, &ldquo;Calculus&rdquo;, or &ldquo;Fractions&rdquo;.
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -281,20 +375,32 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {selectedChapter.topics.map((topic) => {
                 const active = topic.id === selectedTopic.id;
+                const prog = progressRecords.find((p) => p.topicId === topic.id);
                 return (
                   <button
                     key={topic.id}
                     type="button"
-                    onClick={() => onUpdateContext({ ...context, topicId: topic.id })}
+                    onClick={() => {
+                      onUpdateContext({ ...context, topicId: topic.id });
+                      setActionMessage(null);
+                      setActionError(null);
+                    }}
                     className={`text-left p-4 rounded-xl border transition-colors cursor-pointer ${
                       active
                         ? 'bg-[#f5f2ff] dark:bg-[#2c214f] border-[#6d28d9]'
                         : 'bg-[#faf8ff] dark:bg-[#221a3a] border-[#e5dff4] dark:border-[#2e244d] hover:border-[#c4b5fd]'
                     }`}
                   >
-                    <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
-                      Est. {topic.estimatedMinutes} min
-                      {topic.hasNumericals ? ' · Includes Numericals' : ''}
+                    <div className="flex items-center justify-between gap-2 text-xs text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+                      <span>
+                        Est. {topic.estimatedMinutes} min
+                        {topic.hasNumericals ? ' · Numericals' : ''}
+                      </span>
+                      {prog ? (
+                        <span className="font-semibold text-[#059669] dark:text-[#34d399]">
+                          {prog.completionPercentage}%
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-1 font-semibold text-sm text-[#1b1430] dark:text-[#f3f0fc]">
                       {topic.title}
@@ -309,15 +415,65 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
           </div>
 
           <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
-            <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
-              Selected Topic Workspace
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+                  Selected Topic Workspace
+                  {topicProgress ? ` · Progress ${topicProgress.completionPercentage}%` : ''}
+                </div>
+                <h3 className="mt-1 font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                  {selectedTopic.title}
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => void handleQuickComplete()}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                    isTopicCompleted
+                      ? 'bg-[#ecfdf5] dark:bg-[#102d24] border-[#a7f3d0] dark:border-[#047857] text-[#059669] dark:text-[#34d399]'
+                      : 'border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe]'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{isTopicCompleted ? 'Completed' : 'Mark Completed'}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() => void handleBookmarkTopic()}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                    isBookmarked
+                      ? 'bg-[#ede9fe] dark:bg-[#2c214f] border-[#6d28d9] text-[#5b21b6] dark:text-[#f3f0fc]'
+                      : 'border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe]'
+                  }`}
+                >
+                  <Bookmark className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                </button>
+              </div>
             </div>
-            <h3 className="mt-1 font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
-              {selectedTopic.title}
-            </h3>
+
             <p className="mt-2 text-sm text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
               {selectedTopic.summary}
             </p>
+
+            {actionError ? (
+              <div
+                role="alert"
+                className="mt-3 p-3 rounded-xl bg-[#fef2f2] dark:bg-[#3b151a] border border-[#fecaca] dark:border-[#7f1d1d] text-xs text-[#b91c1c] dark:text-[#fca5a5]"
+              >
+                {actionError}
+              </div>
+            ) : null}
+
+            {actionMessage ? (
+              <p role="status" className="mt-3 text-xs font-semibold text-[#059669] dark:text-[#34d399]">
+                {actionMessage}
+              </p>
+            ) : null}
 
             {selectedTopic.keyFormula ? (
               <div className="mt-4 p-3.5 rounded-xl bg-[#f8f6fc] dark:bg-[#221a3a] border border-[#e5dff4] dark:border-[#372a5c]">
@@ -345,7 +501,7 @@ export function ExplorerView({ context, onUpdateContext, onNavigate }: ExplorerV
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-[#4c4366] dark:text-[#e9e4f8] hover:bg-[#ede9fe] text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <FileText className="w-4 h-4" aria-hidden="true" />
-                <span>Generate Notes</span>
+                <span>Study Notes</span>
               </button>
               <button
                 type="button"

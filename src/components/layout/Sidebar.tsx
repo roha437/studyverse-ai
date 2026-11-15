@@ -124,8 +124,8 @@ export function Sidebar({
           <button
             type="button"
             onClick={onSignOutToAuth}
-            aria-label="Open authentication and onboarding screen"
-            title="Switch account or onboarding"
+            aria-label="Sign out or switch account"
+            title="Sign out or switch account"
             className="p-2 rounded-lg text-[#5b5276] dark:text-[#b0a6cf] hover:bg-white dark:hover:bg-[#2d224d] hover:text-[#6d28d9] transition-colors shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" aria-hidden="true" />

@@ -1,14 +1,25 @@
-import { useState } from 'react';
-import { Check, PlugZap, Settings } from 'lucide-react';
-import { CURRICULUM_CLASSES, INTEGRATION_READINESS, STREAM_OPTIONS } from '../../data/curriculum';
-import type { BoardId, GradeLevelId, StreamId, StudentProfile } from '../../types/studyverse';
+import { useEffect, useState } from 'react';
+import { AlertCircle, Check, RefreshCw, Settings, ShieldCheck } from 'lucide-react';
+import { CURRICULUM_CLASSES, STREAM_OPTIONS } from '../../data/curriculum';
+import type {
+  BoardId,
+  DatabaseSyncStatus,
+  DbOperationResult,
+  GradeLevelId,
+  StreamId,
+  StudentProfile,
+} from '../../types/studyverse';
 import { isIntermediateGrade } from '../../utils/curriculumHelpers';
 
 interface ProfileSettingsViewProps {
   profile: StudentProfile;
-  onUpdateProfile: (next: StudentProfile) => void;
+  onUpdateProfile: (next: StudentProfile) => Promise<DbOperationResult<StudentProfile>>;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  authUserEmail?: string | null;
+  dbStatus: DatabaseSyncStatus;
+  dbError: string | null;
+  onRetryDbSync: () => void;
 }
 
 export function ProfileSettingsView({
@@ -16,9 +27,19 @@ export function ProfileSettingsView({
   onUpdateProfile,
   darkMode,
   onToggleDarkMode,
+  authUserEmail = null,
+  dbStatus,
+  dbError,
+  onRetryDbSync,
 }: ProfileSettingsViewProps) {
   const [formState, setFormState] = useState<StudentProfile>(profile);
-  const [savedFeedback, setSavedFeedback] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormState(profile);
+  }, [profile]);
 
   const handleGradeChange = (gradeId: GradeLevelId) => {
     const streamId: StreamId = isIntermediateGrade(gradeId)
@@ -27,14 +48,43 @@ export function ProfileSettingsView({
         : formState.streamId
       : 'general';
     setFormState({ ...formState, gradeId, streamId });
-    setSavedFeedback(false);
+    setSavedMessage(null);
+    setSaveError(null);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateProfile(formState);
-    setSavedFeedback(true);
+    setSaving(true);
+    setSavedMessage(null);
+    setSaveError(null);
+
+    const res = await onUpdateProfile(formState);
+    setSaving(false);
+
+    if (res.error) {
+      setSaveError(res.error);
+    } else if (authUserEmail) {
+      setSavedMessage('Profile saved to your StudyVerse account');
+    } else {
+      setSavedMessage('Profile updated in your current preview session');
+    }
   };
+
+  const syncStatusLabel = (() => {
+    switch (dbStatus) {
+      case 'ready':
+        return 'Your account is securely connected';
+      case 'loading':
+        return 'Syncing your study workspace...';
+      case 'migrations_required':
+      case 'error':
+        return 'Cloud sync paused (local mode active)';
+      case 'local_preview':
+        return 'Preview mode (not signed in)';
+      default:
+        return 'Local workspace mode';
+    }
+  })();
 
   return (
     <div className="space-y-6">
@@ -43,10 +93,12 @@ export function ProfileSettingsView({
           <div className="flex items-center justify-between gap-3 mb-5">
             <div>
               <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
-                Student Profile & Academic Preferences
+                Student Profile &amp; Academic Preferences
               </h2>
               <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
-                Updates apply immediately to your active curriculum and study planner.
+                {authUserEmail
+                  ? 'Changes save directly to your StudyVerse profile and update your active curriculum.'
+                  : 'Updates apply immediately to your active curriculum in this session.'}
               </p>
             </div>
             <Settings className="w-5 h-5 text-[#6d28d9] dark:text-[#a78bfa]" aria-hidden="true" />
@@ -67,7 +119,7 @@ export function ProfileSettingsView({
                   value={formState.name}
                   onChange={(e) => {
                     setFormState({ ...formState, name: e.target.value });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 />
@@ -85,7 +137,7 @@ export function ProfileSettingsView({
                   value={formState.email}
                   onChange={(e) => {
                     setFormState({ ...formState, email: e.target.value });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 />
@@ -126,7 +178,7 @@ export function ProfileSettingsView({
                   value={formState.board}
                   onChange={(e) => {
                     setFormState({ ...formState, board: e.target.value as BoardId });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 >
@@ -147,7 +199,7 @@ export function ProfileSettingsView({
                   id="sv-prof-goal"
                   type="number"
                   min={15}
-                  max={360}
+                  max={720}
                   step={15}
                   value={formState.dailyGoalMinutes}
                   onChange={(e) => {
@@ -155,7 +207,7 @@ export function ProfileSettingsView({
                       ...formState,
                       dailyGoalMinutes: Number(e.target.value) || 60,
                     });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 />
@@ -175,7 +227,7 @@ export function ProfileSettingsView({
                   value={formState.streamId}
                   onChange={(e) => {
                     setFormState({ ...formState, streamId: e.target.value as StreamId });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 >
@@ -187,6 +239,97 @@ export function ProfileSettingsView({
                 </select>
               </div>
             ) : null}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="sv-prof-academic-goal"
+                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                >
+                  Academic Goal
+                </label>
+                <input
+                  id="sv-prof-academic-goal"
+                  type="text"
+                  value={formState.academicGoal ?? ''}
+                  onChange={(e) => {
+                    setFormState({ ...formState, academicGoal: e.target.value });
+                    setSavedMessage(null);
+                  }}
+                  placeholder="e.g. Score 95%+ in Board Science & Maths"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="sv-prof-target-marks"
+                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                >
+                  Target Marks (%)
+                </label>
+                <input
+                  id="sv-prof-target-marks"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={formState.targetMarks ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value.trim();
+                    setFormState({
+                      ...formState,
+                      targetMarks: val === '' ? null : Number(val),
+                    });
+                    setSavedMessage(null);
+                  }}
+                  placeholder="95"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="sv-prof-exam-date"
+                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                >
+                  Upcoming Exam Date
+                </label>
+                <input
+                  id="sv-prof-exam-date"
+                  type="date"
+                  value={formState.examDate ?? ''}
+                  onChange={(e) => {
+                    setFormState({ ...formState, examDate: e.target.value });
+                    setSavedMessage(null);
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="sv-prof-language"
+                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                >
+                  Preferred Language
+                </label>
+                <select
+                  id="sv-prof-language"
+                  value={formState.preferredLanguage ?? 'English'}
+                  onChange={(e) => {
+                    setFormState({ ...formState, preferredLanguage: e.target.value });
+                    setSavedMessage(null);
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                >
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="Telugu">Telugu</option>
+                  <option value="Tamil">Tamil</option>
+                  <option value="Bilingual (English + Regional)">Bilingual</option>
+                </select>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -202,7 +345,7 @@ export function ProfileSettingsView({
                   value={formState.guardianName}
                   onChange={(e) => {
                     setFormState({ ...formState, guardianName: e.target.value });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 />
@@ -220,28 +363,39 @@ export function ProfileSettingsView({
                   value={formState.guardianEmail}
                   onChange={(e) => {
                     setFormState({ ...formState, guardianEmail: e.target.value });
-                    setSavedFeedback(false);
+                    setSavedMessage(null);
                   }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
                 />
               </div>
             </div>
 
+            {saveError ? (
+              <div
+                role="alert"
+                className="p-3 rounded-xl bg-[#fef2f2] dark:bg-[#3b151a] border border-[#fecaca] dark:border-[#7f1d1d] text-xs text-[#b91c1c] dark:text-[#fca5a5] flex items-start gap-2"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>{saveError}</span>
+              </div>
+            ) : null}
+
             <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
-                <span>Save Session Profile</span>
+                <span>{saving ? 'Saving...' : 'Save Profile'}</span>
               </button>
 
-              {savedFeedback ? (
+              {savedMessage ? (
                 <span
                   role="status"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#059669] dark:text-[#34d399]"
                 >
                   <Check className="w-4 h-4" aria-hidden="true" />
-                  <span>Profile updated in current session</span>
+                  <span>{savedMessage}</span>
                 </span>
               ) : null}
             </div>
@@ -269,38 +423,52 @@ export function ProfileSettingsView({
 
           <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
-                External Service Integrations
-              </h3>
-              <PlugZap className="w-4 h-4 text-[#6d28d9] dark:text-[#a78bfa]" aria-hidden="true" />
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#6d28d9] dark:text-[#a78bfa]" aria-hidden="true" />
+                <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                  StudyVerse Account
+                </h3>
+              </div>
+              <span
+                className={`text-xs font-semibold ${
+                  dbStatus === 'ready'
+                    ? 'text-[#059669] dark:text-[#34d399]'
+                    : 'text-[#6d28d9] dark:text-[#c4b5fd]'
+                }`}
+              >
+                {authUserEmail ? 'Signed In' : 'Preview Mode'}
+              </span>
             </div>
-            <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
-              These services will be connected separately via secure environment configuration.
-            </p>
 
-            <div className="space-y-3">
-              {INTEGRATION_READINESS.map((svc) => (
-                <div
-                  key={svc.id}
-                  className="p-3.5 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d]"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-[#1b1430] dark:text-[#f3f0fc]">
-                      {svc.name}
-                    </span>
-                    <span className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
-                      Not Connected
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
-                    {svc.purpose}
-                  </p>
-                  <div className="mt-2 font-mono-tabular text-[11px] text-[#776d94] dark:text-[#968cb8]">
-                    Env keys: {svc.envVars.join(', ')}
-                  </div>
-                </div>
-              ))}
+            <div className="p-4 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d] space-y-2 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+              <div>
+                <span className="font-medium text-[#1b1430] dark:text-[#f3f0fc]">Account: </span>
+                {authUserEmail ?? 'Guest preview session'}
+              </div>
+              <div>
+                <span className="font-medium text-[#1b1430] dark:text-[#f3f0fc]">Status: </span>
+                {syncStatusLabel}
+              </div>
+              <p className="leading-relaxed pt-1">
+                {authUserEmail
+                  ? 'Your profile preferences, study plans, saved notes, bookmarks, and quiz scores belong exclusively to your account.'
+                  : 'Sign in or create a StudyVerse student account from the profile menu to save your progress across sessions.'}
+              </p>
             </div>
+
+            {authUserEmail && dbStatus === 'error' && dbError ? (
+              <div className="p-3.5 rounded-xl bg-[#fffbeb] dark:bg-[#2f2310] border border-[#fde68a] dark:border-[#78350f] text-xs text-[#92400e] dark:text-[#fcd34d] space-y-2">
+                <p className="leading-relaxed">{dbError}</p>
+                <button
+                  type="button"
+                  onClick={onRetryDbSync}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1b1430] border border-[#fde68a] dark:border-[#78350f] font-semibold cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Retry Sync</span>
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
       </div>

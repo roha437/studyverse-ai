@@ -122,10 +122,10 @@ export function NumericalLabView({ context, onNavigate }: NumericalLabViewProps)
             serviceName="Gemini API"
             title={
               verifyRequested
-                ? 'Step Verification Queued for Gemini API'
-                : 'AI Numerical Step Verifier Ready'
+                ? 'Step Verification Requested'
+                : 'Numerical Step Verifier'
             }
-            description="Connect Gemini API to evaluate your working line-by-line, detect unit or sign errors, and guide you to the right final answer without giving fake math solutions."
+            description="Your step-by-step working is structured for guided review of units, formulas, and sign conventions without skipping your own problem solving."
             onNavigate={onNavigate}
           />
         </section>

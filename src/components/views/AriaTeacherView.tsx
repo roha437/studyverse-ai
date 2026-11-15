@@ -137,7 +137,7 @@ export function AriaTeacherView({ context, onNavigate }: AriaTeacherViewProps) {
               <IntegrationBanner
                 serviceName="Gemini API"
                 title="AI Teacher Aria Conversational Workspace"
-                description="Ask any syllabus question below or pick a starter prompt. Live responses from Aria require connecting your server-side Gemini API key; no mock AI chat replies are simulated."
+                description="Ask any syllabus question below or pick a starter prompt to explore step-by-step explanations aligned with your class textbook."
                 onNavigate={onNavigate}
               />
             ) : (
@@ -148,8 +148,8 @@ export function AriaTeacherView({ context, onNavigate }: AriaTeacherViewProps) {
                       {item.question}
                     </div>
                     <div className="max-w-xl rounded-2xl bg-[#f5f2ff] dark:bg-[#221a3a] border border-[#ddd6fe] dark:border-[#372a5c] px-4 py-3 text-xs text-[#4c4366] dark:text-[#c4b5fd]">
-                      Gemini API not connected yet ({item.mode} mode). Once configured, Aria will
-                      answer this question grounded in {cls.label} {subject.name}.
+                      Your question in {item.mode} mode is queued for Aria. Live AI tutoring for{' '}
+                      {cls.label} {subject.name} will answer directly here once enabled for your workspace.
                     </div>
                   </div>
                 ))}
