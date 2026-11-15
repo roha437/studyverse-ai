@@ -20,6 +20,8 @@ import {
 } from './databaseMappers';
 import type {
   AssessmentQuestion,
+  StudyPlanMetadata,
+  StudyPlannerPreferences,
   StudentProfile,
   StudentProgressRecord,
   SubjectItem,
@@ -69,10 +71,12 @@ test('mapProfileRowToStudentProfile and mapStudentProfileToProfileRow round-trip
     targetMarks: 95,
     examDate: '2027-03-15',
     preferredLanguage: 'English',
+    accountRole: 'parent',
   });
   assert.equal(row.id, 'user-123');
   assert.equal(row.class_level, 'class-10');
   assert.equal(row.target_marks, 95);
+  assert.equal(row.account_role, 'parent');
 
   const mapped = mapProfileRowToStudentProfile(
     {
@@ -87,6 +91,7 @@ test('mapProfileRowToStudentProfile and mapStudentProfileToProfileRow round-trip
   assert.equal(mapped.academicGoal, 'Score 95+ in Class 10 Boards');
   assert.equal(mapped.targetMarks, 95);
   assert.equal(mapped.examDate, '2027-03-15');
+  assert.equal(mapped.accountRole, 'parent');
 });
 
 test('weekday and ISO date conversion preserves weekday and update payloads for study_plans', () => {
@@ -143,6 +148,70 @@ test('weekday and ISO date conversion preserves weekday and update payloads for 
   assert.equal(uiTask.priority, 'high');
 });
 
+test('study plan mapper round-trips AI plan grouping and session metadata', () => {
+  const plannerPreferences: StudyPlannerPreferences = {
+    gradeId: 'class-10',
+    board: 'NCERT / CBSE',
+    subjects: ['Mathematics'],
+    weakSubjects: ['Mathematics'],
+    dailyAvailableMinutes: 90,
+    weekStartDate: '2027-01-04',
+    targetDate: '2027-03-01',
+    preferredDays: ['Mon', 'Wed'],
+    chaptersAndTopics: 'Quadratics',
+    revisionPreference: 'spaced',
+  } as const;
+  const metadata: StudyPlanMetadata = {
+    source: 'ai' as const,
+    planGroupId: 'plan-group-1',
+    planTitle: 'Focused mathematics week',
+    planSummary: 'Build algebra confidence.',
+    weekStartDate: plannerPreferences.weekStartDate,
+    targetDate: plannerPreferences.targetDate,
+    dailyAvailableMinutes: plannerPreferences.dailyAvailableMinutes,
+    board: plannerPreferences.board,
+    classLabel: 'Class 10',
+    topic: 'Quadratic equations',
+    learningObjective: 'Solve equations by factorisation.',
+    practiceRecommendation: 'Complete five textbook questions.',
+    sessionType: 'practice' as const,
+    sessionOrder: 0,
+    startTime: '16:00',
+    linkedVideo: {
+      videoId: 'abcdefghijk',
+      title: 'Quadratics explained',
+      channel: 'Study Channel',
+      videoUrl: 'https://www.youtube.com/watch?v=abcdefghijk',
+    },
+    plannerPreferences,
+  };
+  const insertPayload = mapTaskInputToStudyPlanInsert('user-1', {
+    title: 'Quadratic equations practice',
+    subjectName: 'Mathematics',
+    day: 'Mon',
+    planDate: '2027-01-04',
+    durationMinutes: 45,
+    priority: 'medium',
+    plannerMetadata: metadata,
+  });
+  assert.equal(insertPayload.planner_metadata.planGroupId, 'plan-group-1');
+
+  const mapped = mapStudyPlanRowToTask({
+    id: 'ai-session-1',
+    title: insertPayload.title,
+    subject: insertPayload.subject,
+    plan_date: insertPayload.plan_date,
+    duration_minutes: insertPayload.duration_minutes,
+    priority: insertPayload.priority,
+    status: insertPayload.status,
+    planner_metadata: insertPayload.planner_metadata,
+  });
+  assert.equal(mapped.plannerMetadata?.planGroupId, 'plan-group-1');
+  assert.equal(mapped.plannerMetadata?.topic, 'Quadratic equations');
+  assert.equal(mapped.plannerMetadata?.linkedVideo?.videoId, 'abcdefghijk');
+  assert.equal(mapped.plannerMetadata?.plannerPreferences?.revisionPreference, 'spaced');
+});
+
 test('evaluateQuizAnswers stores full question details, options, selected/correct text, and explanations', () => {
   const questions: AssessmentQuestion[] = [
     {
@@ -150,6 +219,7 @@ test('evaluateQuizAnswers stores full question details, options, selected/correc
       prompt: 'Discriminant of ax^2 + bx + c = 0',
       options: ['b^2 - 4ac', 'b^2 + 4ac', '4ac - b^2', 'a^2 - 4bc'],
       correctIndex: 0,
+      difficulty: 'Board Standard',
       explanation: 'D = b^2 - 4ac.',
     },
     {
@@ -157,6 +227,7 @@ test('evaluateQuizAnswers stores full question details, options, selected/correc
       prompt: 'If D < 0, roots are:',
       options: ['Real and equal', 'Real and distinct', 'No real roots', 'Zero'],
       correctIndex: 2,
+      difficulty: 'Board Standard',
       explanation: 'Negative discriminant gives non-real roots.',
     },
   ];
@@ -319,7 +390,17 @@ test('computeDashboardMetrics aggregates study time, assessment averages, and pr
       },
     ],
     focusSessions: [
-      { id: 'f1', label: 'Optics Review', minutes: 25, completedAt: '11:00 AM' },
+      {
+        id: 'f1',
+        label: 'Optics Review',
+        subject: 'Physics',
+        minutes: 25,
+        completedAt: '11:00 AM',
+        startedAt: '2026-11-14T10:35:00Z',
+        endedAt: '2026-11-14T11:00:00Z',
+        durationSeconds: 1500,
+        status: 'completed',
+      },
     ],
     quizAttempts: [
       {

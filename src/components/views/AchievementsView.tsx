@@ -86,12 +86,12 @@ export function AchievementsView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+          <h2 className="font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
             Achievements &amp; Milestones
           </h2>
-          <p className="mt-1 text-sm text-[#5b5276] dark:text-[#b0a6cf] tabular-nums">
+          <p className="mt-1 text-sm text-[#6b6684] dark:text-[#b0a6cf] tabular-nums">
             {unlockedCount} of {milestones.length} milestones unlocked from real study activity
             {achievements.length > 0 ? ` · ${achievements.length} saved to your account` : ''}
           </p>
@@ -100,11 +100,11 @@ export function AchievementsView({
           <button
             type="button"
             onClick={() => onNavigate('quizzes')}
-            className="px-4 py-2 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd] hover:bg-[#ede9fe] transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff] transition-colors cursor-pointer"
           >
             Take Practice Quiz
           </button>
-          <Award className="w-7 h-7 text-[#6d28d9] dark:text-[#a78bfa] shrink-0" aria-hidden="true" />
+          <Award className="w-7 h-7 text-[#5a45c8] dark:text-[#a78bfa] shrink-0" aria-hidden="true" />
         </div>
       </div>
 
@@ -114,13 +114,13 @@ export function AchievementsView({
           return (
             <div
               key={item.code}
-              className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex items-start gap-4"
+              className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex items-start gap-4"
             >
               <div
                 className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                   item.unlocked
-                    ? 'bg-[#ede9fe] dark:bg-[#2c214f] text-[#6d28d9] dark:text-[#c4b5fd]'
-                    : 'bg-[#f8f6fc] dark:bg-[#221a3a] text-[#8f84b3]'
+                    ? 'bg-[#e5deff] dark:bg-[#2c214f] text-[#5a45c8] dark:text-[#c4b5fd]'
+                    : 'bg-[#f7f5ff] dark:bg-[#221a3a] text-[#8f84b3]'
                 }`}
               >
                 {item.unlocked ? (
@@ -130,14 +130,14 @@ export function AchievementsView({
                 )}
               </div>
               <div>
-                <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+                <div className="text-xs font-medium text-[#5a45c8] dark:text-[#c4b5fd]">
                   {item.unlocked ? 'Unlocked' : 'Locked'} · {item.progressLabel}
                   {synced ? ` · Synced ${new Date(synced.unlockedAt).toLocaleDateString()}` : ''}
                 </div>
-                <h3 className="mt-0.5 font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <h3 className="mt-0.5 font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   {item.title}
                 </h3>
-                <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                <p className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                   {item.description}
                 </p>
               </div>

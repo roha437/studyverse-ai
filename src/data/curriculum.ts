@@ -1,10 +1,10 @@
 import type {
   CurriculumClass,
   IntegrationReadinessItem,
-  NotificationItem,
   StreamId,
   StudyTask,
 } from '../types/studyverse';
+import { addSupplementalCurriculum } from './curriculumSupplemental';
 
 export const STREAM_OPTIONS: { id: StreamId; label: string; description: string }[] = [
   { id: 'mpc', label: 'MPC', description: 'Mathematics, Physics & Chemistry' },
@@ -13,7 +13,7 @@ export const STREAM_OPTIONS: { id: StreamId; label: string; description: string 
   { id: 'mec', label: 'MEC', description: 'Mathematics, Economics & Commerce' },
 ];
 
-export const CURRICULUM_CLASSES: CurriculumClass[] = [
+const BASE_CURRICULUM_CLASSES: CurriculumClass[] = [
   {
     id: 'class-5',
     label: 'Class 5',
@@ -817,6 +817,9 @@ export const CURRICULUM_CLASSES: CurriculumClass[] = [
   },
 ];
 
+export const CURRICULUM_CLASSES: CurriculumClass[] =
+  addSupplementalCurriculum(BASE_CURRICULUM_CLASSES);
+
 export const INITIAL_STUDY_TASKS: StudyTask[] = [
   {
     id: 'task-1',
@@ -841,39 +844,6 @@ export const INITIAL_STUDY_TASKS: StudyTask[] = [
     day: 'Wed',
     durationMinutes: 30,
     completed: false,
-  },
-];
-
-export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    title: 'Welcome to StudyVerse',
-    message:
-      'Your StudyVerse curriculum explorer for Classes 5–10 and Intermediate 1st & 2nd Year is ready. Visit Account & Settings anytime to customize your academic goals.',
-    category: 'system',
-    timestamp: 'Just now',
-    read: false,
-    targetModule: 'settings',
-  },
-  {
-    id: 'notif-2',
-    title: 'Plan Today’s Focus Session',
-    message:
-      'Use the Focus & Concentration Center to run a 25-minute Pomodoro study block and log your progress for this session.',
-    category: 'reminders',
-    timestamp: 'Today',
-    read: false,
-    targetModule: 'focus',
-  },
-  {
-    id: 'notif-3',
-    title: 'Previous Classes Library Available',
-    message:
-      'Need to revisit earlier fundamentals? Open Previous Classes from the sidebar to review concepts from earlier grades.',
-    category: 'reminders',
-    timestamp: 'Today',
-    read: true,
-    targetModule: 'previous-classes',
   },
 ];
 

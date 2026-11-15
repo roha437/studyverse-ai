@@ -17,15 +17,15 @@ export function PreviousClassesView({ studentGradeId, onLaunchTopic }: PreviousC
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+          <div className="text-xs font-medium text-[#5a45c8] dark:text-[#c4b5fd]">
             Foundational Bridge Library
           </div>
-          <h2 className="mt-1 font-display text-xl font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+          <h2 className="mt-1 font-display text-xl font-bold text-[#1b1831] dark:text-[#f3f0fc]">
             Previous Classes Learning Library
           </h2>
-          <p className="mt-1 text-sm text-[#5b5276] dark:text-[#b0a6cf] max-w-2xl">
+          <p className="mt-1 text-sm text-[#6b6684] dark:text-[#b0a6cf] max-w-2xl">
             Revisit prerequisite chapters from grades earlier than {currentClass.label} to strengthen
             core formulas and definitions before tackling advanced board topics.
           </p>
@@ -34,19 +34,19 @@ export function PreviousClassesView({ studentGradeId, onLaunchTopic }: PreviousC
         <button
           type="button"
           onClick={() => setShowAllClasses((prev) => !prev)}
-          className="px-4 py-2 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#f8f6fc] dark:bg-[#221a3a] text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd] hover:bg-[#ede9fe] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="px-4 py-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#f7f5ff] dark:bg-[#221a3a] text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
           {showAllClasses ? `Show Grades Below ${currentClass.shortLabel}` : 'Browse All Grades (5–12)'}
         </button>
       </div>
 
       {classesToDisplay.length === 0 ? (
-        <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-8 text-center">
-          <History className="w-8 h-8 text-[#6d28d9] dark:text-[#a78bfa] mx-auto mb-3" aria-hidden="true" />
-          <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+        <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-8 text-center">
+          <History className="w-8 h-8 text-[#5a45c8] dark:text-[#a78bfa] mx-auto mb-3" aria-hidden="true" />
+          <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
             You are currently in Class 5
           </h3>
-          <p className="mt-1 text-sm text-[#5b5276] dark:text-[#b0a6cf] max-w-md mx-auto">
+          <p className="mt-1 text-sm text-[#6b6684] dark:text-[#b0a6cf] max-w-md mx-auto">
             Class 5 is the starting grade in StudyVerse. Switch to "Browse All Grades" above if you
             would like to preview higher classes.
           </p>
@@ -56,16 +56,16 @@ export function PreviousClassesView({ studentGradeId, onLaunchTopic }: PreviousC
           {classesToDisplay.map((cls) => (
             <section
               key={cls.id}
-              className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-4"
+              className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-5 flex flex-col justify-between gap-4"
             >
               <div>
-                <div className="text-xs font-medium text-[#6d28d9] dark:text-[#c4b5fd]">
+                <div className="text-xs font-medium text-[#5a45c8] dark:text-[#c4b5fd]">
                   Foundation Archive · {cls.subjects.length} subjects
                 </div>
-                <h3 className="mt-1 font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <h3 className="mt-1 font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   {cls.label}
                 </h3>
-                <p className="mt-1 text-xs text-[#5b5276] dark:text-[#b0a6cf] leading-relaxed">
+                <p className="mt-1 text-xs text-[#6b6684] dark:text-[#b0a6cf] leading-relaxed">
                   {cls.description}
                 </p>
 
@@ -77,13 +77,13 @@ export function PreviousClassesView({ studentGradeId, onLaunchTopic }: PreviousC
                     return (
                       <div
                         key={subj.id}
-                        className="p-3 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d] flex items-center justify-between gap-3"
+                        className="p-3 rounded-xl bg-[#fcfaff] dark:bg-[#221a3a] border border-[#ece6ff] dark:border-[#2e244d] flex items-center justify-between gap-3"
                       >
                         <div className="min-w-0">
-                          <div className="text-xs font-semibold text-[#1b1430] dark:text-[#f3f0fc] truncate">
+                          <div className="text-xs font-semibold text-[#1b1831] dark:text-[#f3f0fc] truncate">
                             {subj.name} — {firstChapter.title}
                           </div>
-                          <div className="text-xs text-[#5b5276] dark:text-[#b0a6cf] truncate">
+                          <div className="text-xs text-[#6b6684] dark:text-[#b0a6cf] truncate">
                             {firstTopic.title}
                           </div>
                         </div>
@@ -101,7 +101,7 @@ export function PreviousClassesView({ studentGradeId, onLaunchTopic }: PreviousC
                               'lessons'
                             )
                           }
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-[#2c214f] border border-[#e5dff4] dark:border-[#3e3166] text-xs font-semibold text-[#5b21b6] dark:text-[#ddd6fe] hover:bg-[#ede9fe] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-[#2c214f] border border-[#e5deff] dark:border-[#3e3166] text-xs font-semibold text-[#442cb2] dark:text-[#ddd6fe] hover:bg-[#e5deff] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                         >
                           <span>Revise</span>
                           <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />

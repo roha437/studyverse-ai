@@ -13,9 +13,29 @@ const VALID_GRADES: GradeLevelId[] = [
 
 const VALID_STREAMS: StreamId[] = ['general', 'mpc', 'bipc', 'cec', 'mec'];
 const VALID_BOARDS: BoardId[] = ['NCERT / CBSE', 'State Board', 'Intermediate Board'];
+const PLACEHOLDER_VALUE_PATTERN =
+  /(?:^|[\s._/-])(?:your|placeholder|example|replace[-_ ]?me|change[-_ ]?me)(?:$|[\s._/-])/i;
+
+function isPlaceholderValue(value: string): boolean {
+  return PLACEHOLDER_VALUE_PATTERN.test(value.trim());
+}
 
 export function isSupabaseEnvConfigured(url?: string, key?: string): boolean {
-  return Boolean(url && url.trim().startsWith('http') && key && key.trim().length > 10);
+  if (!url || !key) return false;
+
+  const normalizedUrl = url.trim();
+  const normalizedKey = key.trim();
+  if (normalizedKey.length <= 10 || isPlaceholderValue(normalizedKey)) return false;
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    return (
+      ['http:', 'https:'].includes(parsedUrl.protocol) &&
+      !isPlaceholderValue(parsedUrl.hostname)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function extractSupabaseHost(url?: string): string | null {

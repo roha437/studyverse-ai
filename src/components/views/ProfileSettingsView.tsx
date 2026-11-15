@@ -89,19 +89,19 @@ export function ProfileSettingsView({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <section className="lg:col-span-7 rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
+        <section className="lg:col-span-7 rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6">
           <div className="flex items-center justify-between gap-3 mb-5">
             <div>
-              <h2 className="font-display text-lg font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+              <h2 className="font-display text-lg font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                 Student Profile &amp; Academic Preferences
               </h2>
-              <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+              <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                 {authUserEmail
                   ? 'Changes save directly to your StudyVerse profile and update your active curriculum.'
                   : 'Updates apply immediately to your active curriculum in this session.'}
               </p>
             </div>
-            <Settings className="w-5 h-5 text-[#6d28d9] dark:text-[#a78bfa]" aria-hidden="true" />
+            <Settings className="w-5 h-5 text-[#5a45c8] dark:text-[#a78bfa]" aria-hidden="true" />
           </div>
 
           <form onSubmit={handleSave} className="space-y-4">
@@ -109,7 +109,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-name"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Student Name
                 </label>
@@ -121,13 +121,13 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, name: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
               <div>
                 <label
                   htmlFor="sv-prof-email"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Student Email
                 </label>
@@ -139,7 +139,7 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, email: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
             </div>
@@ -148,7 +148,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-grade"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Class / Year
                 </label>
@@ -156,7 +156,7 @@ export function ProfileSettingsView({
                   id="sv-prof-grade"
                   value={formState.gradeId}
                   onChange={(e) => handleGradeChange(e.target.value as GradeLevelId)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 >
                   {CURRICULUM_CLASSES.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -169,7 +169,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-board"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Board
                 </label>
@@ -180,7 +180,7 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, board: e.target.value as BoardId });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 >
                   <option value="NCERT / CBSE">NCERT / CBSE</option>
                   <option value="State Board">State Board</option>
@@ -191,7 +191,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-goal"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Daily Goal (min)
                 </label>
@@ -209,7 +209,7 @@ export function ProfileSettingsView({
                     });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
             </div>
@@ -218,7 +218,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-stream"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Intermediate Stream
                 </label>
@@ -229,7 +229,7 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, streamId: e.target.value as StreamId });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 >
                   {STREAM_OPTIONS.map((opt) => (
                     <option key={opt.id} value={opt.id}>
@@ -244,7 +244,7 @@ export function ProfileSettingsView({
               <div className="sm:col-span-2">
                 <label
                   htmlFor="sv-prof-academic-goal"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Academic Goal
                 </label>
@@ -257,13 +257,13 @@ export function ProfileSettingsView({
                     setSavedMessage(null);
                   }}
                   placeholder="e.g. Score 95%+ in Board Science & Maths"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
               <div>
                 <label
                   htmlFor="sv-prof-target-marks"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Target Marks (%)
                 </label>
@@ -282,7 +282,7 @@ export function ProfileSettingsView({
                     setSavedMessage(null);
                   }}
                   placeholder="95"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] font-mono-tabular text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
             </div>
@@ -291,7 +291,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-exam-date"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Upcoming Exam Date
                 </label>
@@ -303,13 +303,13 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, examDate: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
               <div>
                 <label
                   htmlFor="sv-prof-language"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Preferred Language
                 </label>
@@ -320,7 +320,7 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, preferredLanguage: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 >
                   <option value="English">English</option>
                   <option value="Hindi">Hindi</option>
@@ -335,7 +335,7 @@ export function ProfileSettingsView({
               <div>
                 <label
                   htmlFor="sv-prof-gname"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Parent / Guardian Name
                 </label>
@@ -347,13 +347,13 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, guardianName: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
               <div>
                 <label
                   htmlFor="sv-prof-gemail"
-                  className="block text-xs font-semibold text-[#5b5276] dark:text-[#b0a6cf] mb-1.5"
+                  className="block text-xs font-semibold text-[#6b6684] dark:text-[#b0a6cf] mb-1.5"
                 >
                   Parent / Guardian Email
                 </label>
@@ -365,7 +365,7 @@ export function ProfileSettingsView({
                     setFormState({ ...formState, guardianEmail: e.target.value });
                     setSavedMessage(null);
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#faf8ff] dark:bg-[#221a3a] text-sm text-[#1b1430] dark:text-[#f3f0fc]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#fcfaff] dark:bg-[#221a3a] text-sm text-[#1b1831] dark:text-[#f3f0fc]"
                 />
               </div>
             </div>
@@ -384,7 +384,7 @@ export function ProfileSettingsView({
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6d28d9] hover:bg-[#5b21b6] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#5a45c8] hover:bg-[#442cb2] disabled:opacity-60 text-white text-sm font-semibold transition-colors whitespace-nowrap cursor-pointer"
               >
                 <span>{saving ? 'Saving...' : 'Save Profile'}</span>
               </button>
@@ -403,29 +403,29 @@ export function ProfileSettingsView({
         </section>
 
         <section className="lg:col-span-5 space-y-5">
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex items-center justify-between gap-4">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 flex items-center justify-between gap-4">
             <div>
-              <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+              <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                 Appearance Theme
               </h3>
-              <p className="text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+              <p className="text-xs text-[#6b6684] dark:text-[#b0a6cf]">
                 Switch between Lavender Light and Deep Plum Dark modes.
               </p>
             </div>
             <button
               type="button"
               onClick={onToggleDarkMode}
-              className="px-4 py-2 rounded-xl border border-[#e5dff4] dark:border-[#372a5c] bg-[#f8f6fc] dark:bg-[#221a3a] text-xs font-semibold text-[#5b21b6] dark:text-[#c4b5fd] hover:bg-[#ede9fe] transition-colors whitespace-nowrap cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-[#e5deff] dark:border-[#372a5c] bg-[#f7f5ff] dark:bg-[#221a3a] text-xs font-semibold text-[#442cb2] dark:text-[#c4b5fd] hover:bg-[#e5deff] transition-colors whitespace-nowrap cursor-pointer"
             >
               {darkMode ? 'Switch to Light' : 'Switch to Dark'}
             </button>
           </div>
 
-          <div className="rounded-2xl border border-[#e5dff4] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
+          <div className="rounded-2xl border border-[#e5deff] dark:border-[#2e244d] bg-white dark:bg-[#19132b] p-6 space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#6d28d9] dark:text-[#a78bfa]" aria-hidden="true" />
-                <h3 className="font-display text-base font-bold text-[#1b1430] dark:text-[#f3f0fc]">
+                <ShieldCheck className="w-4 h-4 text-[#5a45c8] dark:text-[#a78bfa]" aria-hidden="true" />
+                <h3 className="font-display text-base font-bold text-[#1b1831] dark:text-[#f3f0fc]">
                   StudyVerse Account
                 </h3>
               </div>
@@ -433,20 +433,20 @@ export function ProfileSettingsView({
                 className={`text-xs font-semibold ${
                   dbStatus === 'ready'
                     ? 'text-[#059669] dark:text-[#34d399]'
-                    : 'text-[#6d28d9] dark:text-[#c4b5fd]'
+                    : 'text-[#5a45c8] dark:text-[#c4b5fd]'
                 }`}
               >
                 {authUserEmail ? 'Signed In' : 'Preview Mode'}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#faf8ff] dark:bg-[#221a3a] border border-[#efeaf9] dark:border-[#2e244d] space-y-2 text-xs text-[#5b5276] dark:text-[#b0a6cf]">
+            <div className="p-4 rounded-xl bg-[#fcfaff] dark:bg-[#221a3a] border border-[#ece6ff] dark:border-[#2e244d] space-y-2 text-xs text-[#6b6684] dark:text-[#b0a6cf]">
               <div>
-                <span className="font-medium text-[#1b1430] dark:text-[#f3f0fc]">Account: </span>
+                <span className="font-medium text-[#1b1831] dark:text-[#f3f0fc]">Account: </span>
                 {authUserEmail ?? 'Guest preview session'}
               </div>
               <div>
-                <span className="font-medium text-[#1b1430] dark:text-[#f3f0fc]">Status: </span>
+                <span className="font-medium text-[#1b1831] dark:text-[#f3f0fc]">Status: </span>
                 {syncStatusLabel}
               </div>
               <p className="leading-relaxed pt-1">
@@ -462,7 +462,7 @@ export function ProfileSettingsView({
                 <button
                   type="button"
                   onClick={onRetryDbSync}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1b1430] border border-[#fde68a] dark:border-[#78350f] font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1b1831] border border-[#fde68a] dark:border-[#78350f] font-semibold cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Retry Sync</span>

@@ -24,19 +24,33 @@ const BASE_PROFILE: StudentProfile = {
 test('isSupabaseEnvConfigured validates URL and publishable key', () => {
   assert.equal(
     isSupabaseEnvConfigured(
-      'https://faikhbkhoxlkvrailyef.supabase.co',
-      'sb_publishable_uWH-jbvarfIPaMZqyeT6Jg_DLfIIYBs'
+      'https://studyverse-test.supabase.co',
+      'test-publishable-key-long-enough'
     ),
     true
   );
   assert.equal(isSupabaseEnvConfigured('', 'sb_publishable_1234567890'), false);
   assert.equal(isSupabaseEnvConfigured('https://example.supabase.co', 'short'), false);
+  assert.equal(
+    isSupabaseEnvConfigured(
+      'https://your-project-ref.supabase.co',
+      'test-publishable-key-long-enough'
+    ),
+    false
+  );
+  assert.equal(
+    isSupabaseEnvConfigured(
+      'https://studyverse-test.supabase.co',
+      'your-supabase-publishable-key'
+    ),
+    false
+  );
 });
 
 test('extractSupabaseHost extracts project domain safely', () => {
   assert.equal(
-    extractSupabaseHost('https://faikhbkhoxlkvrailyef.supabase.co'),
-    'faikhbkhoxlkvrailyef.supabase.co'
+    extractSupabaseHost('https://studyverse-test.supabase.co'),
+    'studyverse-test.supabase.co'
   );
   assert.equal(extractSupabaseHost('not-a-url'), null);
 });
