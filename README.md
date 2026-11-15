@@ -91,11 +91,9 @@ AI sessions are saved as rows in the existing `study_plans` table. Apply `supaba
 
 ## YouTube Learning Hub
 
-The Hub uses the server-only `YOUTUBE_API_KEY` environment variable with YouTube Data API v3. Set it in the server environment (or local `.env`) to enable real search; never prefix it with `VITE_`. The checked-in `.env.example` contains a placeholder. Without a configured key, `/api/youtube/search` returns `503` and the UI provides a direct YouTube search link rather than fabricated results.
+The Hub opens YouTube's public `https://www.youtube.com/results?search_query=...` page directly; it does not call the YouTube Data API or require a YouTube API key. Searches combine the selected class, board, subject, chapter, and topic with the optional custom phrase. Use **Watch on YouTube** to open the real YouTube results in a new tab. StudyVerse does not scrape or fabricate individual video results. Search history remains stored locally in the browser.
 
-`GET /api/youtube/search` accepts `query` (up to 200 characters), optional `gradeId`, `board`, `subject`, `chapter`, `topic`, and an opaque YouTube `pageToken`. The endpoint combines bounded curriculum context, requests up to 12 video results, validates returned video IDs, and loads durations from YouTube when available. It returns `{ "videos": [...], "nextPageToken": "...", "totalResults": n }`; provider quota errors return `429`, invalid input/page tokens return `400`, missing or invalid API configuration returns `503`, and provider failures return a safe `502`/`504`. Search is limited to 12 requests per observed IP per minute in this server process.
-
-Video bookmarks reuse the existing `bookmarks` table (`resource_type = 'video'`), its JSONB metadata, unique user/resource constraint, and owner-only RLS. No database migration is required. Signed-in bookmarks sync to the account and appear in Personal Library; guest bookmarks remain in current app memory only. Search history is stored locally in the browser. Start `npm run dev`, open YouTube Hub, and search to test; actual API results require a valid server-side YouTube Data API key and enabled YouTube Data API v3 project.
+Saved video bookmarks reuse the existing `bookmarks` table (`resource_type = 'video'`), its JSONB metadata, unique user/resource constraint, and owner-only RLS. No database migration is required. Signed-in bookmarks sync to the account and appear in Personal Library; guest bookmarks remain in current app memory only. Video search and Watch links do not require API configuration.
 
 ## Video learning integration
 
